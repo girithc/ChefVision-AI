@@ -10,21 +10,18 @@ Attendees:
 - Wencen Wu
 
 1) Accomplished Since Last Meeting
-- 
-- 
+- First meeting
 
 2) Accomplished During This Meeting
-- 
-- 
+- Find out what is the advisor scope of the project.
+- What the advisor wants us to focus on.
 
 3) Issues / Blockers
-- 
-- 
+- No Issues so far.
 
 4) Action Items
-- Action: … | Owner: … | Due: …
-- Action: … | Owner: … | Due: …
+- Action: Workload assigned to team members | Owner: Shivansh, Richard, Girith | Due: March 6, 2026 
 
 5) Plans / Goals for Next Meeting
-- 
-- 
+- Check the designs for frontend, backend, data models.
+- Improvements on the System/Design choices. 
