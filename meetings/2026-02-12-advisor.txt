@@ -1,0 +1,30 @@
+Meeting Type: Advisor
+Date: 2026-02-12
+Start–End Time: 10:30am - 11:00am
+Location/Mode: Google Meet
+
+Attendees:
+- Richard Pham
+- Girith Choudhary
+- Shivansh Chhabra
+- Wencen Wu
+
+1) Accomplished Since Last Meeting
+- 
+- 
+
+2) Accomplished During This Meeting
+- 
+- 
+
+3) Issues / Blockers
+- 
+- 
+
+4) Action Items
+- Action: … | Owner: … | Due: …
+- Action: … | Owner: … | Due: …
+
+5) Plans / Goals for Next Meeting
+- 
+- 
