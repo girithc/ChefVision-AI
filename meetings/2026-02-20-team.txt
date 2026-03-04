@@ -1,7 +1,7 @@
 Meeting Type: Team-Only
 Date: 2026-02-20
 Start–End Time: 12:30pm - 2:00pm
-Location/Mode: In person
+Location/Mode: Zoom Online
 
 Attendees:
 - Richard Pham
@@ -10,21 +10,19 @@ Attendees:
 
 
 1) Accomplished Since Last Meeting
-- 
-- 
+- First meeting
 
 2) Accomplished During This Meeting
-- 
-- 
+- Find out what is the advisor scope of the project.
+- What the advisor wants us to focus on.
 
 3) Issues / Blockers
-- 
-- 
+- No Issues so far.
 
 4) Action Items
-- Action: … | Owner: … | Due: …
+- Action: Workload assigned to team members | Owner: Shivansh, Richard, Girith | Due: March 6, 2026 
 - Action: … | Owner: … | Due: …
 
 5) Plans / Goals for Next Meeting
-- 
-- 
+- Check the designs for frontend, backend, data models.
+- Improvements on the System/Design choices. 
