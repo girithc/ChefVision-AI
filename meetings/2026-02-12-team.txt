@@ -1,0 +1,25 @@
+Meeting Type: Team-Only
+Date: 2026-02-20
+Start–End Time: 12:30pm - 2:00pm
+Location/Mode: In person
+
+Attendees:
+- Richard Pham
+- Girith Choudhary
+- Shivansh Chhabra
+
+
+1) Accomplished Since Last Meeting
+- First meeting
+
+2) Accomplished During This Meeting
+- Find out what are skills sets we have and which part of the system we are interseted in. 
+
+3) Issues / Blockers
+- No Issues so far.
+
+4) Action Items
+- Action: Choose our project ideas and Tech Stacks| Owner: Shivansh, Richard, Girith | Due: Feb 20, 2026 
+
+5) Plans / Goals for Next Meeting
+- Meet the advisor to understand their point of view and the scope of the project they want.
