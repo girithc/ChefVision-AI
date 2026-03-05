@@ -1,0 +1,25 @@
+Meeting Type: Team-Only
+Date: 2026-02-27
+Start–End Time: 11:30pm - 1:00pm
+Location/Mode: In person
+
+Attendees:
+- Richard Pham
+- Girith Choudhary
+- Shivansh Chhabra
+
+
+1) Accomplished Since Last Meeting
+- Design system architecture, prototype planninng, tech stack and modals used
+
+2) Accomplished During This Meeting
+- Keep track of what we have so far, figured out the system design, framework and machine models using for this project 
+
+3) Issues / Blockers
+- Datasets and modals best fit for this application
+
+4) Action Items
+- Action: Choose our project ideas and Tech Stacks| Owner: Shivansh, Richard, Girith | Due: March 06, 2026 
+
+5) Plans / Goals for Next Meeting
+- Build prototypes, set up environment and github folders
