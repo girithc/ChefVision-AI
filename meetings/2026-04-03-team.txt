@@ -1,0 +1,24 @@
+Meeting Type: Team-Only
+Date: 2026-04-03
+Start–End Time: 11:30pm - 1:30pm
+Location/Mode: MLK / In person
+
+Attendees:
+- Richard Pham
+- Girith Choudhary
+- Shivansh Chhabra
+
+
+1) Accomplished Since Last Meeting
+- System design workflow, workbook 2, UI
+2) Accomplished During This Meeting
+- Keep track of what we have so far, design UI/UX, start working on the dashboard page
+
+3) Issues / Blockers
+- N/A
+
+4) Action Items
+- Action: Choose our project ideas and Tech Stacks| Owner: Shivansh, Richard, Girith | Due: April 09, 2026 
+
+5) Plans / Goals for Next Meeting
+- Set up env, frontend, backend, and database
