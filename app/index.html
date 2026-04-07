@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChefVision AI</title>
+  <style>
+    :root {
+      --bg-0: #e9eef4;
+      --bg-1: #dde5ee;
+      --glass: rgba(255, 255, 255, 0.58);
+      --glass-strong: rgba(255, 255, 255, 0.74);
+      --line: rgba(24, 35, 48, 0.14);
+      --line-strong: rgba(24, 35, 48, 0.22);
+      --text: #142235;
+      --text-soft: #5b6c80;
+      --accent: #2563eb;
+      --accent-strong: #1d4ed8;
+      --ok: #1f6a4c;
+      --warn: #8b641e;
+      --danger: #8f3f2a;
+      --radius-lg: 14px;
+      --radius: 11px;
+      --radius-sm: 8px;
+      --shadow: 0 16px 40px rgba(16, 24, 38, 0.16);
+      --font-display: "SF Pro Display", "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      --font-ui: "SF Pro Text", "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      font-family: var(--font-ui);
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 8% 5%, rgba(37, 99, 235, 0.16), transparent 30%),
+        radial-gradient(circle at 92% 12%, rgba(16, 185, 129, 0.1), transparent 22%),
+        linear-gradient(180deg, var(--bg-0), var(--bg-1));
+    }
+
+    .app {
+      width: min(1120px, calc(100% - 24px));
+      margin: 12px auto 24px;
+    }
+
+    .topbar {
+      display: flex;
+      gap: 14px;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      background: var(--glass);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .mark {
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius-sm);
+      display: grid;
+      place-items: center;
+      background: linear-gradient(145deg, #121a24, #273246);
+      color: #f4f8ff;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      flex: 0 0 auto;
+      font-size: 0.78rem;
+    }
+
+    .brand strong {
+      display: block;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: 0.74rem;
+    }
+
+    .brand span {
+      color: var(--text-soft);
+      font-size: 0.86rem;
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+
+    .tab {
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.5);
+      color: var(--text-soft);
+      padding: 8px 11px;
+      font: inherit;
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      cursor: pointer;
+      transition: 140ms ease;
+    }
+
+    .tab:hover {
+      transform: translateY(-1px);
+      border-color: var(--line-strong);
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.64);
+    }
+
+    .tab.active {
+      background: #0f1824;
+      border-color: #0f1824;
+      color: #edf3ff;
+    }
+
+    .screen {
+      display: none;
+      margin-top: 12px;
+      animation: rise 220ms ease both;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      background: var(--glass-strong);
+      backdrop-filter: blur(14px);
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      padding: 16px;
+      margin-bottom: 10px;
+      background:
+        linear-gradient(130deg, rgba(255, 255, 255, 0.74), rgba(237, 243, 251, 0.55)),
+        radial-gradient(circle at 88% 8%, rgba(37, 99, 235, 0.14), transparent 26%);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 5px 8px;
+      font-size: 0.68rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-soft);
+      background: rgba(255, 255, 255, 0.55);
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-weight: 700;
+      line-height: 1.08;
+    }
+
+    h1 {
+      margin-top: 10px;
+      font-size: clamp(1.65rem, 4.3vw, 2.45rem);
+      max-width: 18ch;
+      letter-spacing: -0.01em;
+    }
+
+    .hero p {
+      margin: 10px 0 0;
+      max-width: 70ch;
+      color: var(--text-soft);
+      line-height: 1.5;
+      font-size: 0.94rem;
+    }
+
+    .chat {
+      padding: 12px;
+    }
+
+    .chat-log {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 10px;
+      height: 320px;
+      overflow: auto;
+      background: rgba(255, 255, 255, 0.56);
+      display: grid;
+      align-content: start;
+      gap: 8px;
+    }
+
+    .msg {
+      padding: 9px 11px;
+      border-radius: 9px;
+      font-size: 0.92rem;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    .msg.user {
+      margin-left: auto;
+      max-width: 84%;
+      background: #121d2c;
+      color: #eaf2ff;
+      border: 1px solid #1f2b3d;
+    }
+
+    .msg.assistant {
+      max-width: 90%;
+      background: rgba(255, 255, 255, 0.67);
+      color: var(--text);
+      border: 1px solid rgba(36, 50, 64, 0.14);
+    }
+
+    .composer {
+      margin-top: 9px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .top-gap {
+      margin-top: 10px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-soft);
+    }
+
+    label.btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text);
+      font-size: 0.83rem;
+      font-weight: 700;
+    }
+
+    textarea,
+    input[type="text"],
+    input[type="date"],
+    input[type="number"],
+    select {
+      width: 100%;
+      border: 1px solid rgba(30, 44, 60, 0.2);
+      border-radius: 9px;
+      padding: 10px 11px;
+      font: inherit;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.75);
+    }
+
+    textarea:focus,
+    input[type="text"]:focus,
+    input[type="date"]:focus,
+    input[type="number"]:focus,
+    select:focus {
+      outline: none;
+      border-color: rgba(37, 99, 235, 0.55);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    textarea {
+      min-height: 82px;
+      resize: vertical;
+    }
+
+    .file-input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .file-name {
+      display: inline-flex;
+      align-items: center;
+      min-height: 38px;
+      padding: 7px 10px;
+      max-width: 100%;
+      flex: 1 1 240px;
+      border-radius: 9px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.54);
+      color: var(--text-soft);
+      font-size: 0.83rem;
+      line-height: 1.35;
+    }
+
+    .btn {
+      border: 1px solid transparent;
+      border-radius: 9px;
+      padding: 9px 12px;
+      font: inherit;
+      font-size: 0.83rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 140ms ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      color: #f3f8ff;
+      border-color: rgba(12, 36, 78, 0.35);
+    }
+
+    .btn.secondary {
+      background: rgba(255, 255, 255, 0.62);
+      color: var(--text);
+      border-color: var(--line);
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
+      gap: 10px;
+    }
+
+    .block {
+      padding: 13px;
+    }
+
+    .block h3 {
+      font-size: 1.23rem;
+      letter-spacing: -0.01em;
+    }
+
+    .muted {
+      margin: 8px 0 0;
+      color: var(--text-soft);
+      line-height: 1.45;
+      font-size: 0.91rem;
+    }
+
+    .grid2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+      margin-top: 10px;
+    }
+
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.56);
+      padding: 9px;
+    }
+
+    .stat .k {
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-soft);
+    }
+
+    .stat .v {
+      margin-top: 6px;
+      font-size: 1.13rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      border-bottom: 1px solid rgba(20, 35, 53, 0.12);
+      text-align: left;
+      padding: 9px 0;
+      vertical-align: middle;
+    }
+
+    th {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-soft);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 8px;
+      padding: 6px 9px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      border: 1px solid transparent;
+      line-height: 1.2;
+    }
+
+    .tag.ok {
+      color: var(--ok);
+      background: rgba(31, 106, 76, 0.11);
+      border-color: rgba(31, 106, 76, 0.24);
+    }
+
+    .tag.warn {
+      color: var(--warn);
+      background: rgba(139, 100, 30, 0.11);
+      border-color: rgba(139, 100, 30, 0.23);
+    }
+
+    .tag.danger {
+      color: var(--danger);
+      background: rgba(143, 63, 42, 0.1);
+      border-color: rgba(143, 63, 42, 0.2);
+    }
+
+    .empty {
+      margin-top: 10px;
+      border: 1px dashed rgba(20, 35, 53, 0.24);
+      border-radius: 9px;
+      padding: 11px;
+      color: var(--text-soft);
+      background: rgba(255, 255, 255, 0.48);
+      line-height: 1.45;
+      font-size: 0.9rem;
+    }
+
+    .vendor-group {
+      margin-top: 10px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.54);
+    }
+
+    .vendor-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .qty-input {
+      width: 92px;
+      padding: 7px 8px;
+      border-radius: 8px;
+      border: 1px solid rgba(20, 35, 53, 0.24);
+      background: rgba(255, 255, 255, 0.8);
+    }
+
+    .foot {
+      margin-top: 10px;
+      color: var(--text-soft);
+      font-size: 0.83rem;
+      line-height: 1.4;
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 980px) {
+      .split,
+      .grid2 {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        border-radius: var(--radius);
+      }
+
+      h1 {
+        max-width: none;
+      }
+
+      .chat-log {
+        height: 280px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark">CV</div>
+        <div>
+          <strong>ChefVision AI</strong>
+          <span>Paperwork in. Clean inventory intelligence out.</span>
+        </div>
+      </div>
+      <div class="tabs" role="tablist" aria-label="Product pages">
+        <button class="tab active" data-tab="document" role="tab" aria-selected="true">Document AI</button>
+        <button class="tab" data-tab="match" role="tab" aria-selected="false">Ingredient Match</button>
+        <button class="tab" data-tab="event" role="tab" aria-selected="false">Event Planning</button>
+        <button class="tab" data-tab="reorder" role="tab" aria-selected="false">Reorder Engine</button>
+      </div>
+    </header>
+
+    <section class="screen active" data-screen="document">
+      <article class="panel hero">
+        <div class="eyebrow">Document AI</div>
+        <h1>Upload a vendor bill directly in chat.</h1>
+        <p>Single workflow: attach bill, confirm vendor, get extracted line items, and update stock. No extra dashboard noise.</p>
+      </article>
+      <article class="panel chat">
+        <div id="doc-chat-log" class="chat-log"></div>
+        <div class="composer">
+          <textarea id="doc-input" placeholder="Ask to extract fields, validate totals, or tag vendor."></textarea>
+          <div class="row">
+            <input id="doc-file" class="file-input" type="file" accept=".pdf,.png,.jpg,.jpeg,.csv,.xlsx">
+            <label for="doc-file" class="btn secondary">Choose Bill</label>
+            <span id="doc-file-name" class="file-name">No file selected</span>
+            <button id="doc-upload" class="btn secondary" type="button">Upload Bill</button>
+            <button id="doc-send" class="btn primary" type="button">Send</button>
+          </div>
+          <div class="row">
+            <span id="doc-stock-summary" class="file-name">Lowest stock items will appear here after updates.</span>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="screen" data-screen="match">
+      <article class="panel hero">
+        <div class="eyebrow">Ingredient Match</div>
+        <h1>Normalize ingredient names in one chat flow.</h1>
+        <p>Paste aliases or upload a small CSV. The matcher returns canonical names and marks uncertain rows for review.</p>
+      </article>
+      <article class="panel chat">
+        <div id="match-chat-log" class="chat-log"></div>
+        <div class="composer">
+          <textarea id="match-input" placeholder="Example: roma tomato, tomato roma, roma tomatoes"></textarea>
+          <div class="row">
+            <input id="match-file" class="file-input" type="file" accept=".txt,.csv">
+            <label for="match-file" class="btn secondary">Choose Alias File</label>
+            <span id="match-file-name" class="file-name">No file selected</span>
+            <button id="match-upload" class="btn secondary" type="button">Upload Alias List</button>
+            <button id="match-send" class="btn primary" type="button">Run Match</button>
+          </div>
+          <div class="row">
+            <span id="match-pending-count" class="tag ok">0 pending aliases</span>
+            <button id="match-approve-all" class="btn secondary" type="button">Approve Pending</button>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="screen" data-screen="event">
+      <article class="panel hero">
+        <div class="eyebrow">Event Planning</div>
+        <h1>Plan one event and compute demand.</h1>
+        <p>Set event details, guests, and prep buffer. Build a demand plan against current stock levels.</p>
+      </article>
+      <section class="split">
+        <article class="panel block">
+          <h3>Planning Inputs</h3>
+          <p class="muted">Keep this practical: one event config that drives ingredient demand and shortage detection.</p>
+          <div class="grid2">
+            <label>
+              Event Name
+              <input id="event-name" type="text" placeholder="Friday tasting">
+            </label>
+            <label>
+              Event Date
+              <input id="event-date" type="date">
+            </label>
+            <label>
+              Guests
+              <input id="event-guests" type="number" min="1" step="1">
+            </label>
+            <label>
+              Prep Buffer (%)
+              <input id="event-buffer" type="number" min="0" max="30" step="1">
+            </label>
+          </div>
+          <div class="row top-gap">
+            <button id="event-build" class="btn primary" type="button">Build Plan</button>
+          </div>
+          <p class="foot">Stock updates from Document AI bill uploads are included automatically.</p>
+        </article>
+        <article class="panel block">
+          <h3>Plan Summary</h3>
+          <div class="grid2">
+            <div class="stat">
+              <div class="k">Guests</div>
+              <div id="sum-guests" class="v">0</div>
+            </div>
+            <div class="stat">
+              <div class="k">Shortages</div>
+              <div id="sum-shortages" class="v">0</div>
+            </div>
+            <div class="stat">
+              <div class="k">Estimated Reorder</div>
+              <div id="sum-cost" class="v">$0.00</div>
+            </div>
+            <div class="stat">
+              <div class="k">Plan Status</div>
+              <div id="sum-status" class="v">Not built</div>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Ingredient</th>
+                <th>Need</th>
+                <th>On Hand</th>
+                <th>Short</th>
+              </tr>
+            </thead>
+            <tbody id="event-plan-body"></tbody>
+          </table>
+          <div id="event-empty" class="empty">Build a plan to see ingredient-level demand.</div>
+        </article>
+      </section>
+    </section>
+
+    <section class="screen" data-screen="reorder">
+      <article class="panel hero">
+        <div class="eyebrow">Reorder Engine</div>
+        <h1>Generate and export a reorder draft.</h1>
+        <p>Uses the latest event plan and approved matches. Adjust quantities by vendor, then export CSV.</p>
+      </article>
+      <section class="split">
+        <article class="panel block">
+          <h3>Vendor Draft</h3>
+          <p class="muted">Quantities default to computed shortages. You can adjust before exporting.</p>
+          <div id="reorder-groups"></div>
+          <div id="reorder-empty" class="empty">No reorder draft available. Build an event plan first.</div>
+        </article>
+        <article class="panel block">
+          <h3>Export</h3>
+          <div class="grid2">
+            <div class="stat">
+              <div class="k">Vendors</div>
+              <div id="re-vendors" class="v">0</div>
+            </div>
+            <div class="stat">
+              <div class="k">Line Items</div>
+              <div id="re-lines" class="v">0</div>
+            </div>
+            <div class="stat">
+              <div class="k">Estimated Spend</div>
+              <div id="re-spend" class="v">$0.00</div>
+            </div>
+            <div class="stat">
+              <div class="k">Readiness</div>
+              <div id="re-status" class="v">Blocked</div>
+            </div>
+          </div>
+          <div class="row top-gap">
+            <button id="reorder-export" class="btn primary" type="button">Export CSV</button>
+            <button id="rebuild-plan" class="btn secondary" type="button">Rebuild Plan</button>
+          </div>
+          <p class="foot" id="re-note">Blocked until event plan exists and Ingredient Match has no pending aliases.</p>
+        </article>
+      </section>
+    </section>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "chefvision_working_product_v1";
+
+    const inventoryBase = [
+      { id: "roma_tomato", name: "Tomato - Roma", unit: "lb", vendor: "Bay Produce", perGuest: 0.35, price: 1.3, onHand: 18 },
+      { id: "flat_parsley", name: "Parsley - Flat leaf", unit: "bunch", vendor: "Metro Greens", perGuest: 0.11, price: 1.85, onHand: 4 },
+      { id: "olive_oil", name: "Olive oil", unit: "gal", vendor: "Kitchen Supply Co.", perGuest: 0.07, price: 36, onHand: 5 },
+      { id: "butter", name: "Butter", unit: "lb", vendor: "Northline Dairy", perGuest: 0.08, price: 4.2, onHand: 6 },
+      { id: "cream", name: "Heavy cream", unit: "qt", vendor: "Northline Dairy", perGuest: 0.045, price: 3.7, onHand: 12 }
+    ];
+
+    const vendorToIngredients = {
+      "Bay Produce": ["roma_tomato"],
+      "Metro Greens": ["flat_parsley"],
+      "Kitchen Supply Co.": ["olive_oil"],
+      "Northline Dairy": ["butter", "cream"]
+    };
+
+    const seed = {
+      tab: "document",
+      docChat: [
+        { role: "assistant", text: "Drop a vendor bill here and I will extract line items and update stock." }
+      ],
+      matchChat: [
+        { role: "assistant", text: "Paste aliases (comma or newline separated). I will map them to canonical ingredients." }
+      ],
+      aliases: {},
+      pendingAliases: [],
+      stock: Object.fromEntries(inventoryBase.map((i) => [i.id, i.onHand])),
+      event: {
+        name: "Friday tasting",
+        date: "2026-04-10",
+        guests: 120,
+        buffer: 8
+      },
+      latestPlan: null,
+      reorderQty: {}
+    };
+
+    function clone(obj) {
+      return JSON.parse(JSON.stringify(obj));
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return clone(seed);
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object") return clone(seed);
+        parsed.tab = parsed.tab || "document";
+        parsed.docChat = Array.isArray(parsed.docChat) ? parsed.docChat : clone(seed.docChat);
+        parsed.matchChat = Array.isArray(parsed.matchChat) ? parsed.matchChat : clone(seed.matchChat);
+        parsed.aliases = parsed.aliases || {};
+        parsed.pendingAliases = Array.isArray(parsed.pendingAliases) ? parsed.pendingAliases : [];
+        parsed.stock = parsed.stock || Object.fromEntries(inventoryBase.map((i) => [i.id, i.onHand]));
+        parsed.event = parsed.event || clone(seed.event);
+        parsed.latestPlan = parsed.latestPlan || null;
+        parsed.reorderQty = parsed.reorderQty || {};
+        return parsed;
+      } catch (err) {
+        return clone(seed);
+      }
+    }
+
+    let state = loadState();
+
+    const tabButtons = Array.from(document.querySelectorAll(".tab"));
+    const screens = Array.from(document.querySelectorAll(".screen"));
+    const docChatLog = document.getElementById("doc-chat-log");
+    const docInput = document.getElementById("doc-input");
+    const docFile = document.getElementById("doc-file");
+    const docFileName = document.getElementById("doc-file-name");
+    const docUpload = document.getElementById("doc-upload");
+    const docSend = document.getElementById("doc-send");
+    const docStockSummary = document.getElementById("doc-stock-summary");
+    const matchChatLog = document.getElementById("match-chat-log");
+    const matchInput = document.getElementById("match-input");
+    const matchFile = document.getElementById("match-file");
+    const matchFileName = document.getElementById("match-file-name");
+    const matchUpload = document.getElementById("match-upload");
+    const matchSend = document.getElementById("match-send");
+    const matchPendingCount = document.getElementById("match-pending-count");
+    const matchApproveAll = document.getElementById("match-approve-all");
+    const eventName = document.getElementById("event-name");
+    const eventDate = document.getElementById("event-date");
+    const eventGuests = document.getElementById("event-guests");
+    const eventBuffer = document.getElementById("event-buffer");
+    const eventBuild = document.getElementById("event-build");
+    const sumGuests = document.getElementById("sum-guests");
+    const sumShortages = document.getElementById("sum-shortages");
+    const sumCost = document.getElementById("sum-cost");
+    const sumStatus = document.getElementById("sum-status");
+    const eventPlanBody = document.getElementById("event-plan-body");
+    const eventEmpty = document.getElementById("event-empty");
+    const reorderGroups = document.getElementById("reorder-groups");
+    const reorderEmpty = document.getElementById("reorder-empty");
+    const reVendors = document.getElementById("re-vendors");
+    const reLines = document.getElementById("re-lines");
+    const reSpend = document.getElementById("re-spend");
+    const reStatus = document.getElementById("re-status");
+    const reNote = document.getElementById("re-note");
+    const reorderExport = document.getElementById("reorder-export");
+    const rebuildPlan = document.getElementById("rebuild-plan");
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function money(v) {
+      return `$${v.toFixed(2)}`;
+    }
+
+    function pretty(v) {
+      return Number.isInteger(v) ? String(v) : v.toFixed(1).replace(/\.0$/, "");
+    }
+
+    function addChatMessage(which, role, text) {
+      const target = which === "doc" ? state.docChat : state.matchChat;
+      target.push({ role, text });
+      saveState();
+      renderChats();
+    }
+
+    function renderOneChat(logEl, messages) {
+      logEl.innerHTML = messages
+        .map((m) => `<div class="msg ${m.role}">${m.text}</div>`)
+        .join("");
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function renderChats() {
+      renderOneChat(docChatLog, state.docChat);
+      renderOneChat(matchChatLog, state.matchChat);
+    }
+
+    function renderTabs() {
+      tabButtons.forEach((btn) => {
+        const active = btn.dataset.tab === state.tab;
+        btn.classList.toggle("active", active);
+        btn.setAttribute("aria-selected", active ? "true" : "false");
+      });
+      screens.forEach((screen) => {
+        screen.classList.toggle("active", screen.dataset.screen === state.tab);
+      });
+    }
+
+    function renderProductStatus() {
+      const lowStock = inventoryBase
+        .map((inv) => ({ ...inv, onHand: Number(state.stock[inv.id] || 0) }))
+        .sort((a, b) => a.onHand - b.onHand)
+        .slice(0, 3)
+        .map((x) => `${x.name} ${pretty(x.onHand)} ${x.unit}`)
+        .join(" / ");
+      docStockSummary.textContent = `Lowest stock: ${lowStock}`;
+
+      const pending = state.pendingAliases.length;
+      matchPendingCount.textContent = `${pending} pending aliases`;
+      matchPendingCount.classList.remove("ok", "warn");
+      matchPendingCount.classList.add(pending > 0 ? "warn" : "ok");
+      matchApproveAll.disabled = pending === 0;
+    }
+
+    function guessVendor(fileName) {
+      const n = fileName.toLowerCase();
+      if (n.includes("bay")) return "Bay Produce";
+      if (n.includes("metro")) return "Metro Greens";
+      if (n.includes("kitchen")) return "Kitchen Supply Co.";
+      if (n.includes("dairy") || n.includes("northline")) return "Northline Dairy";
+      return "Bay Produce";
+    }
+
+    function createBillExtraction(vendor) {
+      const ids = vendorToIngredients[vendor] || ["roma_tomato"];
+      return ids.map((id) => {
+        const ref = inventoryBase.find((x) => x.id === id);
+        const qty = Number((Math.random() * 8 + 4).toFixed(1));
+        return { id: ref.id, name: ref.name, qty, unit: ref.unit };
+      });
+    }
+
+    function applyBillStock(lines) {
+      lines.forEach((line) => {
+        const prev = Number(state.stock[line.id] || 0);
+        state.stock[line.id] = Number((prev + line.qty).toFixed(1));
+      });
+    }
+
+    function handleBillUpload(file) {
+      const vendor = guessVendor(file.name);
+      const lines = createBillExtraction(vendor);
+      applyBillStock(lines);
+
+      const rows = lines.map((l) => `- ${l.name}: +${pretty(l.qty)} ${l.unit}`).join("\n");
+      addChatMessage("doc", "user", `Uploaded bill: ${file.name}`);
+      addChatMessage(
+        "doc",
+        "assistant",
+        `Vendor detected: ${vendor}\nExtracted lines:\n${rows}\nStock levels were updated from this bill.`
+      );
+      renderAll();
+    }
+
+    function canonicalFor(alias) {
+      const a = alias.trim().toLowerCase();
+      if (!a) return { canonical: "", confidence: 0 };
+      if (a.includes("roma") || a.includes("tomato")) return { canonical: "Tomato - Roma", confidence: 0.93 };
+      if (a.includes("parsley")) return { canonical: "Parsley - Flat leaf", confidence: 0.92 };
+      if (a.includes("evoo") || a.includes("olive")) return { canonical: "Olive oil", confidence: 0.9 };
+      if (a.includes("cream")) return { canonical: "Heavy cream", confidence: 0.95 };
+      if (a.includes("butter")) return { canonical: "Butter", confidence: 0.95 };
+      return { canonical: "Needs manual mapping", confidence: 0.45 };
+    }
+
+    function runMatching(rawText) {
+      const parts = rawText
+        .split(/[\n,]+/)
+        .map((x) => x.trim())
+        .filter(Boolean);
+      if (!parts.length) return;
+
+      const resultLines = [];
+      const pending = [];
+
+      parts.forEach((alias) => {
+        const mapped = canonicalFor(alias);
+        state.aliases[alias] = mapped.canonical;
+        if (mapped.confidence < 0.8) pending.push(alias);
+        resultLines.push(`- ${alias} -> ${mapped.canonical} (${Math.round(mapped.confidence * 100)}%)`);
+      });
+
+      state.pendingAliases = Array.from(new Set([...state.pendingAliases, ...pending]));
+
+      addChatMessage("match", "user", rawText);
+      addChatMessage(
+        "match",
+        "assistant",
+        `Matched ${parts.length} aliases:\n${resultLines.join("\n")}\nPending review: ${state.pendingAliases.length}`
+      );
+      renderAll();
+    }
+
+    function approveAllPendingAliases() {
+      if (!state.pendingAliases.length) return;
+      const count = state.pendingAliases.length;
+      state.pendingAliases = [];
+      addChatMessage(
+        "match",
+        "assistant",
+        `Approved ${count} pending aliases. Reorder export is now unblocked if a plan exists.`
+      );
+      renderAll();
+    }
+
+    function buildPlan() {
+      state.event.name = eventName.value.trim() || "Untitled event";
+      state.event.date = eventDate.value || "";
+      state.event.guests = Math.max(1, Number(eventGuests.value || 1));
+      state.event.buffer = Math.max(0, Number(eventBuffer.value || 0));
+
+      const factor = state.event.guests * (1 + state.event.buffer / 100);
+      const items = inventoryBase.map((inv) => {
+        const onHand = Number(state.stock[inv.id] || 0);
+        const need = Number((inv.perGuest * factor).toFixed(1));
+        const short = Number(Math.max(0, need - onHand).toFixed(1));
+        const cost = Number((short * inv.price).toFixed(2));
+        return { ...inv, onHand, need, short, cost };
+      });
+
+      const shortages = items.filter((i) => i.short > 0);
+      const totalCost = shortages.reduce((acc, x) => acc + x.cost, 0);
+
+      state.latestPlan = {
+        createdAt: Date.now(),
+        event: clone(state.event),
+        items,
+        shortages,
+        totalCost
+      };
+
+      shortages.forEach((s) => {
+        if (state.reorderQty[s.id] == null) state.reorderQty[s.id] = s.short;
+      });
+
+      saveState();
+      renderAll();
+    }
+
+    function renderEventInputs() {
+      eventName.value = state.event.name;
+      eventDate.value = state.event.date;
+      eventGuests.value = state.event.guests;
+      eventBuffer.value = state.event.buffer;
+    }
+
+    function renderPlan() {
+      if (!state.latestPlan) {
+        sumGuests.textContent = "0";
+        sumShortages.textContent = "0";
+        sumCost.textContent = "$0.00";
+        sumStatus.textContent = "Not built";
+        eventPlanBody.innerHTML = "";
+        eventEmpty.style.display = "block";
+        return;
+      }
+
+      const p = state.latestPlan;
+      sumGuests.textContent = String(p.event.guests);
+      sumShortages.textContent = String(p.shortages.length);
+      sumCost.textContent = money(p.totalCost);
+      sumStatus.textContent = p.shortages.length ? "Needs reorder" : "Covered";
+
+      eventPlanBody.innerHTML = p.items
+        .map((i) => `
+          <tr>
+            <td>${i.name}</td>
+            <td>${pretty(i.need)} ${i.unit}</td>
+            <td>${pretty(i.onHand)} ${i.unit}</td>
+            <td>${i.short > 0 ? `${pretty(i.short)} ${i.unit}` : "-"}</td>
+          </tr>
+        `)
+        .join("");
+      eventEmpty.style.display = "none";
+    }
+
+    function groupShortagesByVendor(shortages) {
+      return shortages.reduce((acc, item) => {
+        if (!acc[item.vendor]) acc[item.vendor] = [];
+        acc[item.vendor].push(item);
+        return acc;
+      }, {});
+    }
+
+    function currentDraftLines() {
+      if (!state.latestPlan) return [];
+      return state.latestPlan.shortages
+        .map((s) => {
+          const qty = Number(state.reorderQty[s.id] ?? s.short);
+          return { ...s, qty };
+        })
+        .filter((x) => x.qty > 0);
+    }
+
+    function renderReorder() {
+      if (!state.latestPlan) {
+        reorderGroups.innerHTML = "";
+        reorderEmpty.style.display = "block";
+        reVendors.textContent = "0";
+        reLines.textContent = "0";
+        reSpend.textContent = "$0.00";
+        reStatus.textContent = "Blocked";
+        reorderExport.disabled = true;
+        reNote.textContent = "Blocked until event plan exists and Ingredient Match has no pending aliases.";
+        return;
+      }
+
+      const lines = currentDraftLines();
+      const grouped = groupShortagesByVendor(lines);
+      const vendors = Object.keys(grouped);
+      const spend = lines.reduce((a, b) => a + b.qty * b.price, 0);
+      const blockedByMatch = state.pendingAliases.length > 0;
+      const ready = !blockedByMatch && lines.length > 0;
+
+      reVendors.textContent = String(vendors.length);
+      reLines.textContent = String(lines.length);
+      reSpend.textContent = money(spend);
+      reStatus.textContent = ready ? "Ready" : "Blocked";
+      reorderExport.disabled = !ready;
+
+      if (blockedByMatch) {
+        reNote.textContent = `Blocked by ${state.pendingAliases.length} pending alias matches in Ingredient Match.`;
+      } else if (!lines.length) {
+        reNote.textContent = "No shortage lines to export.";
+      } else {
+        reNote.textContent = "Ready to export reorder CSV.";
+      }
+
+      if (!lines.length) {
+        reorderGroups.innerHTML = "";
+        reorderEmpty.style.display = "block";
+        return;
+      }
+
+      reorderEmpty.style.display = "none";
+      reorderGroups.innerHTML = vendors
+        .map((vendor) => {
+          const items = grouped[vendor];
+          const vSpend = items.reduce((a, b) => a + b.qty * b.price, 0);
+          const rows = items
+            .map((item) => `
+              <tr>
+                <td>${item.name}</td>
+                <td>${pretty(item.short)} ${item.unit}</td>
+                <td>
+                  <input class="qty-input" type="number" min="0" step="0.1" value="${item.qty}" data-reorder-id="${item.id}">
+                </td>
+                <td>${money(item.qty * item.price)}</td>
+              </tr>
+            `)
+            .join("");
+          return `
+            <div class="vendor-group">
+              <div class="vendor-head">
+                <strong>${vendor}</strong>
+                <span class="tag ${vSpend > 0 ? "warn" : "ok"}">${money(vSpend)}</span>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Ingredient</th>
+                    <th>Suggested</th>
+                    <th>Draft Qty</th>
+                    <th>Cost</th>
+                  </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
+          `;
+        })
+        .join("");
+    }
+
+    function exportReorderCsv() {
+      const lines = currentDraftLines();
+      if (!lines.length || state.pendingAliases.length > 0) return;
+
+      const header = ["Vendor", "Ingredient", "Quantity", "Unit", "Unit Price", "Line Cost"];
+      const rows = lines.map((l) => [
+        l.vendor,
+        l.name,
+        pretty(l.qty),
+        l.unit,
+        l.price.toFixed(2),
+        (l.qty * l.price).toFixed(2)
+      ]);
+
+      const csv = [header, ...rows]
+        .map((row) => row.map((v) => `"${String(v).replace(/"/g, "\"\"")}"`).join(","))
+        .join("\n");
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "chefvision-reorder-draft.csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function renderAll() {
+      renderTabs();
+      renderChats();
+      renderProductStatus();
+      renderEventInputs();
+      renderPlan();
+      renderReorder();
+      saveState();
+    }
+
+    tabButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        state.tab = btn.dataset.tab;
+        renderAll();
+      });
+    });
+
+    docSend.addEventListener("click", () => {
+      const text = docInput.value.trim();
+      if (!text) return;
+      addChatMessage("doc", "user", text);
+      addChatMessage("doc", "assistant", "For Document AI, upload a bill file and I will extract and apply stock updates.");
+      docInput.value = "";
+    });
+
+    docFile.addEventListener("change", () => {
+      const file = docFile.files && docFile.files[0];
+      docFileName.textContent = file ? file.name : "No file selected";
+    });
+
+    docUpload.addEventListener("click", () => {
+      const file = docFile.files && docFile.files[0];
+      if (!file) {
+        addChatMessage("doc", "assistant", "Select a vendor bill file first.");
+        return;
+      }
+      handleBillUpload(file);
+      docFile.value = "";
+      docFileName.textContent = "No file selected";
+    });
+
+    matchSend.addEventListener("click", () => {
+      const text = matchInput.value.trim();
+      if (!text) return;
+      runMatching(text);
+      matchInput.value = "";
+    });
+
+    matchFile.addEventListener("change", () => {
+      const file = matchFile.files && matchFile.files[0];
+      matchFileName.textContent = file ? file.name : "No file selected";
+    });
+
+    matchUpload.addEventListener("click", () => {
+      const file = matchFile.files && matchFile.files[0];
+      if (!file) {
+        addChatMessage("match", "assistant", "Select a text or CSV alias file first.");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const text = String(reader.result || "");
+        if (!text.trim()) {
+          addChatMessage("match", "assistant", `Uploaded ${file.name}, but no aliases were found.`);
+          return;
+        }
+        runMatching(text);
+      };
+      reader.onerror = () => {
+        addChatMessage("match", "assistant", `Could not read ${file.name}. Try a plain text or CSV file.`);
+      };
+      reader.readAsText(file);
+      matchFile.value = "";
+      matchFileName.textContent = "No file selected";
+    });
+
+    matchApproveAll.addEventListener("click", approveAllPendingAliases);
+
+    eventBuild.addEventListener("click", buildPlan);
+
+    reorderGroups.addEventListener("input", (event) => {
+      const input = event.target.closest("[data-reorder-id]");
+      if (!input) return;
+      const id = input.getAttribute("data-reorder-id");
+      const qty = Math.max(0, Number(input.value || 0));
+      state.reorderQty[id] = qty;
+      renderAll();
+    });
+
+    reorderExport.addEventListener("click", exportReorderCsv);
+
+    rebuildPlan.addEventListener("click", () => {
+      state.tab = "event";
+      renderAll();
+    });
+
+    renderAll();
+  </script>
+</body>
+</html>
