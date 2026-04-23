@@ -1,0 +1,19 @@
+.git
+.github
+.azure-tmp
+node_modules
+**/node_modules
+dist
+**/dist
+coverage
+**/coverage
+build
+outputs
+tmp
+tmp-data
+uploads
+**/tmp-data
+*.log
+.DS_Store
+ChefVision_DesignSpec_Girith (1).pdf
+Workbook 2_Dev (1).pdf

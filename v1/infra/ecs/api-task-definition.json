@@ -1,0 +1,37 @@
+{
+  "family": "chefvision-api",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::<account-id>:role/chefvision-ecs-exec",
+  "taskRoleArn": "arn:aws:iam::<account-id>:role/chefvision-api-task",
+  "containerDefinitions": [
+    {
+      "name": "api",
+      "image": "<account-id>.dkr.ecr.<region>.amazonaws.com/chefvision-api:<sha>",
+      "essential": true,
+      "portMappings": [{ "containerPort": 4000, "hostPort": 4000, "protocol": "tcp" }],
+      "environment": [
+        { "name": "PORT", "value": "4000" },
+        { "name": "STORAGE_MODE", "value": "s3" },
+        { "name": "S3_BUCKET", "value": "chefvision-invoices" },
+        { "name": "AWS_REGION", "value": "us-east-1" },
+        { "name": "NORMALIZER_URL", "value": "http://chefvision-normalizer.internal:4001" }
+      ],
+      "secrets": [
+        { "name": "DATABASE_URL", "valueFrom": "chefvision/database-url" },
+        { "name": "REDIS_URL", "valueFrom": "chefvision/redis-url" },
+        { "name": "JWT_SECRET", "valueFrom": "chefvision/jwt-secret" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/chefvision-api",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

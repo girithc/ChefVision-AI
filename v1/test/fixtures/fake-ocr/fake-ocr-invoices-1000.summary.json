@@ -1,0 +1,76 @@
+{
+  "seed": 2952026,
+  "invoiceCount": 1000,
+  "totalLineItems": 10511,
+  "averageLineItemsPerInvoice": 10.51,
+  "suppliers": {
+    "Prime Vendor Wholesale": 94,
+    "West Coast Pantry": 95,
+    "Golden State Produce": 99,
+    "Bayline Kitchen Goods": 114,
+    "Pacific Fresh Foods": 96,
+    "Harvest Depot": 105,
+    "Anchor Food Traders": 106,
+    "MarketLine Ingredients": 87,
+    "Metro Restaurant Supply": 97,
+    "Chef Source Direct": 107
+  },
+  "topCanonicals": [
+    {
+      "key": "Lettuce",
+      "value": 397
+    },
+    {
+      "key": "Chicken Breast",
+      "value": 383
+    },
+    {
+      "key": "Salt",
+      "value": 376
+    },
+    {
+      "key": "Cilantro",
+      "value": 376
+    },
+    {
+      "key": "Onion",
+      "value": 374
+    },
+    {
+      "key": "Ground Beef",
+      "value": 371
+    },
+    {
+      "key": "Rice",
+      "value": 369
+    },
+    {
+      "key": "Spinach",
+      "value": 369
+    },
+    {
+      "key": "Potato",
+      "value": 367
+    },
+    {
+      "key": "Carrot",
+      "value": 364
+    }
+  ],
+  "noiseFlags": {
+    "header_noise": 581,
+    "footer_noise": 508,
+    "merged_tokens": 317,
+    "ocr_confusion": 334,
+    "split_tokens": 287,
+    "extra_whitespace": 426,
+    "column_headers": 579
+  },
+  "sampleInvoiceIds": [
+    "ocr-invoice-0001",
+    "ocr-invoice-0002",
+    "ocr-invoice-0003",
+    "ocr-invoice-0004",
+    "ocr-invoice-0005"
+  ]
+}

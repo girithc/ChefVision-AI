@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChefVision · Results</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" />
+    <link rel="stylesheet" href="/ui/assets/styles.css" />
+  </head>
+  <body data-page="results">
+    <nav class="nav-bar">
+      <div class="nav-inner">
+        <a class="brand" href="/ui">chefvision</a>
+        <div class="nav-links">
+          <a href="/ui">Architecture</a>
+          <a href="/ui/run">Run</a>
+          <a href="/ui/results" class="active">Results</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="wrap">
+      <section class="hero">
+        <p class="eyebrow">Final results</p>
+        <h1>What landed in PostgreSQL.</h1>
+        <p class="lead">Totals, routing decisions, and the most recent batch report.</p>
+      </section>
+
+      <section id="auth-card" class="login-card">
+        <h2>Sign in</h2>
+        <form id="login-form" class="stacked">
+          <label>Email
+            <input name="email" type="email" value="owner@chefvision.test" />
+          </label>
+          <label>Password
+            <input name="password" type="password" value="secret" />
+          </label>
+          <div><button class="btn" type="submit">Authenticate</button></div>
+          <p class="inline-message" id="auth-message"></p>
+        </form>
+      </section>
+
+      <section id="results-panel" class="hidden">
+        <div class="section-title"><h2>Totals</h2></div>
+        <div id="totals-grid" class="metric-grid"></div>
+
+        <section>
+          <div class="two-col">
+            <div>
+              <div class="section-title"><h2>Invoice states</h2></div>
+              <div id="invoice-statuses" class="metric-grid"></div>
+            </div>
+            <div>
+              <div class="section-title"><h2>Routing</h2></div>
+              <div id="routing-breakdown" class="metric-grid"></div>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div class="two-col">
+            <div>
+              <div class="section-title"><h2>Top inventory</h2></div>
+              <div id="top-inventory" class="table-wrap"></div>
+            </div>
+            <div>
+              <div class="section-title"><h2>Top canonicals</h2></div>
+              <div id="top-canonicals" class="table-wrap"></div>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div class="section-title"><h2>Recent invoices</h2></div>
+          <div id="recent-invoices" class="table-wrap"></div>
+        </section>
+
+        <section>
+          <div class="section-title"><h2>Recent line items</h2></div>
+          <div id="recent-line-items" class="table-wrap"></div>
+        </section>
+
+        <section>
+          <div class="section-title"><h2>Saved report</h2></div>
+          <pre class="json" id="report-json"></pre>
+        </section>
+      </section>
+    </main>
+
+    <footer class="footer">chefvision · typescript · postgres · pgvector · minilm</footer>
+
+    <script type="module" src="/ui/assets/app.js"></script>
+  </body>
+</html>

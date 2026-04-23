@@ -1,0 +1,27 @@
+{
+  "name": "chefvision-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace @chefvision/shared && npm run build --workspace @chefvision/normalizer && npm run build --workspace @chefvision/api",
+    "dev:api": "npm run dev --workspace @chefvision/api",
+    "dev:normalizer": "npm run dev --workspace @chefvision/normalizer",
+    "data:generate:ocr": "tsx scripts/generate-fake-ocr-dataset.ts",
+    "test:e2e:ocr-live": "node --import tsx scripts/run-live-ocr-api-batch.ts",
+    "ml:backfill:embeddings": "node --import tsx scripts/backfill-normalizer-embeddings.ts",
+    "test:e2e:ocr-batch": "node --import tsx scripts/run-fake-ocr-e2e.ts",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "test:e2e": "npm run test:e2e --workspace @chefvision/api"
+  },
+  "devDependencies": {
+    "@types/node": "^24.8.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChefVision</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" />
+    <link rel="stylesheet" href="/ui/assets/styles.css" />
+  </head>
+  <body data-page="home">
+    <nav class="nav-bar">
+      <div class="nav-inner">
+        <a class="brand" href="/ui">chefvision</a>
+        <div class="nav-links">
+          <a href="/ui" class="active">Architecture</a>
+          <a href="/ui/run">Run</a>
+          <a href="/ui/results">Results</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="wrap">
+      <section class="hero">
+        <p class="eyebrow">OCR → Inventory</p>
+        <h1>A typed backend for turning invoice OCR into structured inventory.</h1>
+        <p class="lead">Upload raw OCR text. Extract line items. Normalize supplier names against a canonical catalog using MiniLM embeddings + pgvector. Update the inventory ledger.</p>
+        <div class="btn-row" style="margin-top:28px">
+          <a class="btn" href="/ui/run">Run a test</a>
+          <a class="btn ghost" href="/ui/results">View results</a>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-title">
+          <h2>Architecture</h2>
+          <span class="chip idle">pipeline</span>
+        </div>
+        <div class="diagram-frame">
+          <svg class="pipeline-diagram" viewBox="0 0 1040 440" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ChefVision backend architecture">
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" fill="#1a1a1a" />
+              </marker>
+              <style>
+                .node { fill: #ffffff; stroke: #1a1a1a; stroke-width: 1.2; }
+                .node.accent { stroke: #20a7c9; }
+                .node.store { fill: #fafafa; }
+                .lbl { font: 500 13px "Inter", sans-serif; fill: #1a1a1a; }
+                .sub { font: 500 10.5px "JetBrains Mono", monospace; fill: #6b6b6b; letter-spacing: 0.06em; text-transform: uppercase; }
+                .edge { stroke: #1a1a1a; stroke-width: 1.1; fill: none; }
+                .edge-dash { stroke-dasharray: 4 4; }
+                .group { fill: none; stroke: #cfcfcf; stroke-width: 1; stroke-dasharray: 3 4; }
+                .grp-lbl { font: 500 10.5px "JetBrains Mono", monospace; fill: #6b6b6b; letter-spacing: 0.1em; text-transform: uppercase; }
+              </style>
+            </defs>
+
+            <!-- Ingest -->
+            <rect class="node" x="20" y="40" width="150" height="70" />
+            <text class="sub" x="35" y="62">01 · ingest</text>
+            <text class="lbl" x="35" y="84">OCR Text Upload</text>
+            <text class="sub" x="35" y="100" style="text-transform:none; letter-spacing:0">POST /invoices/upload</text>
+
+            <!-- API -->
+            <rect class="node" x="220" y="40" width="150" height="70" />
+            <text class="sub" x="235" y="62">02 · api</text>
+            <text class="lbl" x="235" y="84">Express + Auth</text>
+            <text class="sub" x="235" y="100" style="text-transform:none; letter-spacing:0">JWT · multer · zod</text>
+
+            <!-- Queue -->
+            <rect class="node" x="420" y="40" width="150" height="70" />
+            <text class="sub" x="435" y="62">03 · queue</text>
+            <text class="lbl" x="435" y="84">BullMQ Job</text>
+            <text class="sub" x="435" y="100" style="text-transform:none; letter-spacing:0">Redis</text>
+
+            <!-- Worker -->
+            <rect class="node" x="620" y="40" width="150" height="70" />
+            <text class="sub" x="635" y="62">04 · worker</text>
+            <text class="lbl" x="635" y="84">Extractor</text>
+            <text class="sub" x="635" y="100" style="text-transform:none; letter-spacing:0">line-item parse</text>
+
+            <!-- Normalizer group -->
+            <rect class="group" x="160" y="160" width="720" height="160" rx="2" />
+            <text class="grp-lbl" x="176" y="180">05 · normalization service</text>
+
+            <rect class="node accent" x="180" y="200" width="130" height="90" />
+            <text class="sub" x="193" y="222">preprocess</text>
+            <text class="lbl" x="193" y="244">Clean &amp;</text>
+            <text class="lbl" x="193" y="262">tokenize</text>
+
+            <rect class="node accent" x="330" y="200" width="130" height="90" />
+            <text class="sub" x="343" y="222">embed</text>
+            <text class="lbl" x="343" y="244">MiniLM</text>
+            <text class="lbl" x="343" y="262">384-d vector</text>
+
+            <rect class="node accent" x="480" y="200" width="130" height="90" />
+            <text class="sub" x="493" y="222">retrieve</text>
+            <text class="lbl" x="493" y="244">pgvector</text>
+            <text class="lbl" x="493" y="262">k-NN candidates</text>
+
+            <rect class="node accent" x="630" y="200" width="130" height="90" />
+            <text class="sub" x="643" y="222">score</text>
+            <text class="lbl" x="643" y="244">Weighted</text>
+            <text class="lbl" x="643" y="262">hybrid rerank</text>
+
+            <rect class="node accent" x="780" y="200" width="90" height="90" />
+            <text class="sub" x="793" y="222">route</text>
+            <text class="lbl" x="793" y="244">auto /</text>
+            <text class="lbl" x="793" y="262">review /</text>
+            <text class="lbl" x="793" y="280">new</text>
+
+            <!-- Store -->
+            <rect class="node store" x="220" y="360" width="150" height="60" />
+            <text class="sub" x="235" y="382">06 · persist</text>
+            <text class="lbl" x="235" y="404">PostgreSQL</text>
+
+            <rect class="node store" x="420" y="360" width="150" height="60" />
+            <text class="sub" x="435" y="382">07 · inventory</text>
+            <text class="lbl" x="435" y="404">Ledger update</text>
+
+            <rect class="node store" x="620" y="360" width="150" height="60" />
+            <text class="sub" x="635" y="382">08 · client</text>
+            <text class="lbl" x="635" y="404">SSE stream</text>
+
+            <!-- Top row edges -->
+            <path class="edge" d="M170 75 L220 75" marker-end="url(#arrow)" />
+            <path class="edge" d="M370 75 L420 75" marker-end="url(#arrow)" />
+            <path class="edge" d="M570 75 L620 75" marker-end="url(#arrow)" />
+
+            <!-- Worker to normalizer group -->
+            <path class="edge" d="M695 110 L695 200" marker-end="url(#arrow)" />
+
+            <!-- Normalizer internal edges -->
+            <path class="edge" d="M310 245 L330 245" marker-end="url(#arrow)" />
+            <path class="edge" d="M460 245 L480 245" marker-end="url(#arrow)" />
+            <path class="edge" d="M610 245 L630 245" marker-end="url(#arrow)" />
+            <path class="edge" d="M760 245 L780 245" marker-end="url(#arrow)" />
+
+            <!-- Normalizer to Postgres -->
+            <path class="edge" d="M295 290 L295 360" marker-end="url(#arrow)" />
+            <!-- Postgres to Inventory -->
+            <path class="edge" d="M370 390 L420 390" marker-end="url(#arrow)" />
+            <!-- Inventory to SSE -->
+            <path class="edge" d="M570 390 L620 390" marker-end="url(#arrow)" />
+            <!-- SSE back to client (dashed) -->
+            <path class="edge edge-dash" d="M695 360 L695 140 L95 140 L95 110" marker-end="url(#arrow)" />
+          </svg>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-title"><h2>Stages</h2></div>
+        <div class="stage-list">
+          <div class="stage">
+            <div class="stage-num">01</div>
+            <div class="stage-title">Ingest</div>
+            <p class="stage-desc">OCR text posted as JSON, plain text, or CSV. No image parsing — the OCR layer sits upstream.</p>
+          </div>
+          <div class="stage">
+            <div class="stage-num">02</div>
+            <div class="stage-title">API</div>
+            <p class="stage-desc">Express with JWT auth. Creates the invoice row, writes the file to storage, enqueues a job.</p>
+          </div>
+          <div class="stage">
+            <div class="stage-num">03</div>
+            <div class="stage-title">Queue</div>
+            <p class="stage-desc">BullMQ on Redis. Inline fallback when Redis is absent. Idempotent per invoice id.</p>
+          </div>
+          <div class="stage">
+            <div class="stage-num">04</div>
+            <div class="stage-title">Extract</div>
+            <p class="stage-desc">Worker pulls the file, splits line items, calls the normalizer with raw name, qty, unit.</p>
+          </div>
+          <div class="stage">
+            <div class="stage-num">05</div>
+            <div class="stage-title">Normalize</div>
+            <p class="stage-desc">Preprocess → MiniLM embed (384-d) → pgvector k-NN → weighted hybrid score → confidence router.</p>
+          </div>
+          <div class="stage">
+            <div class="stage-num">06</div>
+            <div class="stage-title">Persist</div>
+            <p class="stage-desc">Invoice, line items, routing decisions, score breakdowns stored in PostgreSQL.</p>
+          </div>
+          <div class="stage">
+            <div class="stage-num">07</div>
+            <div class="stage-title">Inventory</div>
+            <p class="stage-desc">Auto-committed matches update the ledger immediately. Review items are queued for human check.</p>
+          </div>
+          <div class="stage">
+            <div class="stage-num">08</div>
+            <div class="stage-title">Stream</div>
+            <p class="stage-desc">Server-sent events push status transitions to the client for live monitoring.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">chefvision · typescript · postgres · pgvector · minilm</footer>
+  </body>
+</html>

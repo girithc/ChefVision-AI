@@ -1,0 +1,94 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: chefvision
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ../sql/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql:ro
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until /usr/bin/mc alias set local http://minio:9000 minioadmin minioadmin; do sleep 1; done;
+      /usr/bin/mc mb --ignore-existing local/chefvision-invoices;
+      /usr/bin/mc anonymous set none local/chefvision-invoices;
+      exit 0;
+      "
+
+  normalizer:
+    build:
+      context: ..
+      dockerfile: apps/normalizer/Dockerfile
+    depends_on:
+      - postgres
+    environment:
+      PORT: 4001
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/chefvision
+      HIGH_CONF_THRESHOLD: 0.88
+      LOW_CONF_THRESHOLD: 0.55
+      EMBEDDING_PROVIDER: minilm
+      EMBEDDING_MODEL_ID: onnx-community/all-MiniLM-L6-v2-ONNX
+      EMBEDDING_DTYPE: fp32
+      EMBEDDING_DIMENSIONS: 384
+      EMBEDDING_CACHE_DIR: /tmp/chefvision-model-cache
+      EMBEDDING_ALLOW_REMOTE_MODELS: "true"
+      AUTO_BACKFILL_EMBEDDINGS: "true"
+      MODEL_VERSION: docker-normalizer-v2-minilm
+    ports:
+      - "4001:4001"
+    volumes:
+      - normalizer-model-cache:/tmp/chefvision-model-cache
+
+  api:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    depends_on:
+      - postgres
+      - redis
+      - minio-init
+      - normalizer
+    environment:
+      PORT: 4000
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/chefvision
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: chefvision-dev-secret
+      NORMALIZER_URL: http://normalizer:4001
+      STORAGE_MODE: s3
+      S3_BUCKET: chefvision-invoices
+      AWS_REGION: us-east-1
+      S3_ENDPOINT: http://minio:9000
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+    ports:
+      - "4000:4000"
+
+volumes:
+  postgres-data:
+  minio-data:
+  normalizer-model-cache:

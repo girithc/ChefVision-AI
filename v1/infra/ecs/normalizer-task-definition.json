@@ -1,0 +1,34 @@
+{
+  "family": "chefvision-normalizer",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::<account-id>:role/chefvision-ecs-exec",
+  "taskRoleArn": "arn:aws:iam::<account-id>:role/chefvision-normalizer-task",
+  "containerDefinitions": [
+    {
+      "name": "normalizer",
+      "image": "<account-id>.dkr.ecr.<region>.amazonaws.com/chefvision-normalizer:<sha>",
+      "essential": true,
+      "portMappings": [{ "containerPort": 4001, "hostPort": 4001, "protocol": "tcp" }],
+      "environment": [
+        { "name": "PORT", "value": "4001" },
+        { "name": "HIGH_CONF_THRESHOLD", "value": "0.88" },
+        { "name": "LOW_CONF_THRESHOLD", "value": "0.55" },
+        { "name": "EMBEDDING_DIMENSIONS", "value": "16" }
+      ],
+      "secrets": [
+        { "name": "DATABASE_URL", "valueFrom": "chefvision/database-url" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/chefvision-normalizer",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

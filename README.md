@@ -126,3 +126,10 @@ Early-stage productization focused on:
 * High-accuracy ingredient normalization
 * Event-based inventory checking and reorder generation
 * Improving forecasting performance as historical usage data grows
+
+---
+
+## Repository Layout
+
+* `app/frontend` contains the original frontend application.
+* `v1` contains the TypeScript backend, normalization service, infrastructure files, datasets, and test harness added for the full ChefVision pipeline.

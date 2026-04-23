@@ -1,0 +1,165 @@
+{
+  "stack": {
+    "apiBaseUrl": "http://127.0.0.1:4000",
+    "datasetPath": "/Users/girithchoudhary/Desktop/295/test/fixtures/fake-ocr/fake-ocr-invoices-1000.jsonl",
+    "reportPath": "/Users/girithchoudhary/Desktop/295/test/fixtures/fake-ocr/fake-ocr-live-api-report.json"
+  },
+  "pipeline": [
+    "1. Seed the live PostgreSQL canonical ingredient catalog and alias table from the fake OCR dataset.",
+    "2. Log in through the real API and upload each invoice OCR text file as text/plain.",
+    "3. The API stores the file, creates an invoice row, and enqueues async processing.",
+    "4. The worker extracts line items and calls the MiniLM normalizer service over HTTP.",
+    "5. The normalizer backfills missing catalog embeddings, retrieves pgvector candidates, reranks them, and routes the decision.",
+    "6. The API stores normalized matches and updates the live inventory ledger for auto-committed items."
+  ],
+  "invoiceCount": 1000,
+  "completedInvoices": 1000,
+  "failedInvoices": 0,
+  "totalExpectedLineItems": 10511,
+  "totalExtractedLineItems": 10357,
+  "exactInvoiceLineCountMatches": 853,
+  "rawNameMatchRate": 0.0852,
+  "canonicalMatchRate": 0.1121,
+  "routingBreakdown": {
+    "auto_commit": 9299,
+    "new_ingredient": 781,
+    "needs_review": 277
+  },
+  "sampleFailures": [
+    {
+      "invoiceId": "ocr-invoice-0001",
+      "status": "done",
+      "errorMessage": null,
+      "expectedCount": 7,
+      "extractedCount": 6,
+      "expectedFirst": "MOZZ 1CASE FRESH",
+      "extractedFirst": "Cheddar Cheese"
+    },
+    {
+      "invoiceId": "ocr-invoice-0004",
+      "status": "done",
+      "errorMessage": null,
+      "expectedCount": 15,
+      "extractedCount": 14,
+      "expectedFirst": "Grnd Beef 5LB CASE ORGANIC",
+      "extractedFirst": "Boneless Chicken Breast 32 OZ"
+    },
+    {
+      "invoiceId": "ocr-invoice-0018",
+      "status": "done",
+      "errorMessage": null,
+      "expectedCount": 10,
+      "extractedCount": 8,
+      "expectedFirst": "PARSLEY BAG",
+      "extractedFirst": "Celry"
+    },
+    {
+      "invoiceId": "ocr-invoice-0035",
+      "status": "done",
+      "errorMessage": null,
+      "expectedCount": 13,
+      "extractedCount": 12,
+      "expectedFirst": "CHICKEN BRST 15LB",
+      "extractedFirst": "AP FLOUR 1 CASE BOX"
+    },
+    {
+      "invoiceId": "ocr-invoice-0041",
+      "status": "done",
+      "errorMessage": null,
+      "expectedCount": 14,
+      "extractedCount": 13,
+      "expectedFirst": "Basil 1BUNCH",
+      "extractedFirst": "Basil 1 BUNCH"
+    },
+    {
+      "invoiceId": "ocr-invoice-0054",
+      "status": "done",
+      "errorMessage": null,
+      "expectedCount": 6,
+      "extractedCount": 5,
+      "expectedFirst": "CHICKEN BRST 40LBS BAG",
+      "extractedFirst": "CHICKEN BRST 40 LBS BAG"
+    },
+    {
+      "invoiceId": "ocr-invoice-0060",
+      "status": "done",
+      "errorMessage": null,
+      "expectedCount": 12,
+      "extractedCount": 11,
+      "expectedFirst": "CELERY STALKS 1BUNCH",
+      "extractedFirst": "BUTTON MUSHROOM 12 OUNCE"
+    },
+    {
+      "invoiceId": "ocr-invoice-0067",
+      "status": "done",
+      "errorMessage": null,
+      "expectedCount": 13,
+      "extractedCount": 12,
+      "expectedFirst": "EGG 12EA BAG",
+      "extractedFirst": "Basil Bunch 3 BAG"
+    },
+    {
+      "invoiceId": "ocr-invoice-0076",
+      "status": "done",
+      "errorMessage": null,
+      "expectedCount": 6,
+      "extractedCount": 5,
+      "expectedFirst": "CHKN BRST 10LB",
+      "extractedFirst": "1 CEBERG LETTUCE 3 CS CASE"
+    },
+    {
+      "invoiceId": "ocr-invoice-0077",
+      "status": "done",
+      "errorMessage": null,
+      "expectedCount": 7,
+      "extractedCount": 6,
+      "expectedFirst": "CEL 1EACH",
+      "extractedFirst": "BUTER 12 OZ CASE"
+    },
+    {
+      "invoiceId": "ocr-invoice-0080",
+      "status": "done",
+      "errorMessage": null,
+      "expectedCount": 15,
+      "extractedCount": 13,
+      "expectedFirst": "RL EGG 1CASE",
+      "extractedFirst": "Baby Spinach"
+    },
+    {
+      "invoiceId": "ocr-invoice-0085",
+      "status": "done",
+      "errorMessage": null,
+      "expectedCount": 11,
+      "extractedCount": 10,
+      "expectedFirst": "BLK PPR 15LB",
+      "extractedFirst": "BLACK PEPPER 15 LB"
+    },
+    {
+      "invoiceId": "ocr-invoice-0093",
+      "status": "done",
+      "errorMessage": null,
+      "expectedCount": 12,
+      "extractedCount": 11,
+      "expectedFirst": "POTATO 25LB FRESH",
+      "extractedFirst": "BABY SPINACH FRESH"
+    },
+    {
+      "invoiceId": "ocr-invoice-0095",
+      "status": "done",
+      "errorMessage": null,
+      "expectedCount": 7,
+      "extractedCount": 6,
+      "expectedFirst": "GR BF 32OZ ORGANIC",
+      "extractedFirst": "GR BF 320 Z 0 RGAN 1 C"
+    },
+    {
+      "invoiceId": "ocr-invoice-0099",
+      "status": "done",
+      "errorMessage": null,
+      "expectedCount": 14,
+      "extractedCount": 13,
+      "expectedFirst": "SHRMP 12OZ BAG",
+      "extractedFirst": "Basil 2 BG"
+    }
+  ]
+}

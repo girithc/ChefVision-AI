@@ -1,0 +1,96 @@
+{
+  "pipeline": [
+    "1. Uploaded OCR text is stored in invoice storage.",
+    "2. The worker loads the file and runs invoice extraction on unstructured OCR text.",
+    "3. Parsed line items are written to the invoice store.",
+    "4. Each line item is sent to the ML normalization service.",
+    "5. The normalizer preprocesses text, embeds it, retrieves candidates, scores them, and routes the decision.",
+    "6. Auto-committed matches update the inventory ledger."
+  ],
+  "invoiceCount": 1000,
+  "completedInvoices": 1000,
+  "failedInvoices": 0,
+  "totalExpectedLineItems": 10511,
+  "totalExtractedLineItems": 10357,
+  "exactInvoiceLineCountMatches": 853,
+  "rawNameMatchRate": 0.8292,
+  "canonicalMatchRate": 0.8652,
+  "routingBreakdown": {
+    "auto_commit": 9338,
+    "needs_review": 978,
+    "new_ingredient": 41
+  },
+  "inventoryRestaurantCount": 5,
+  "sampleFailures": [
+    {
+      "invoiceId": "ocr-invoice-0001",
+      "expectedCount": 7,
+      "extractedCount": 6,
+      "expectedFirst": "MOZZ 1CASE FRESH",
+      "extractedFirst": "MOZZ 1 CASE FRESH"
+    },
+    {
+      "invoiceId": "ocr-invoice-0004",
+      "expectedCount": 15,
+      "extractedCount": 14,
+      "expectedFirst": "Grnd Beef 5LB CASE ORGANIC",
+      "extractedFirst": "Grnd Beef 5 LB CASE ORGANIC"
+    },
+    {
+      "invoiceId": "ocr-invoice-0018",
+      "expectedCount": 10,
+      "extractedCount": 8,
+      "expectedFirst": "PARSLEY BAG",
+      "extractedFirst": "PARSLEY BAG"
+    },
+    {
+      "invoiceId": "ocr-invoice-0035",
+      "expectedCount": 13,
+      "extractedCount": 12,
+      "expectedFirst": "CHICKEN BRST 15LB",
+      "extractedFirst": "CHICKEN BRST 15 LB"
+    },
+    {
+      "invoiceId": "ocr-invoice-0041",
+      "expectedCount": 14,
+      "extractedCount": 13,
+      "expectedFirst": "Basil 1BUNCH",
+      "extractedFirst": "Basil 1 BUNCH"
+    },
+    {
+      "invoiceId": "ocr-invoice-0054",
+      "expectedCount": 6,
+      "extractedCount": 5,
+      "expectedFirst": "CHICKEN BRST 40LBS BAG",
+      "extractedFirst": "CHICKEN BRST 40 LBS BAG"
+    },
+    {
+      "invoiceId": "ocr-invoice-0060",
+      "expectedCount": 12,
+      "extractedCount": 11,
+      "expectedFirst": "CELERY STALKS 1BUNCH",
+      "extractedFirst": "CELERY 5 TALK 5 1 BUNCH"
+    },
+    {
+      "invoiceId": "ocr-invoice-0067",
+      "expectedCount": 13,
+      "extractedCount": 12,
+      "expectedFirst": "EGG 12EA BAG",
+      "extractedFirst": "EGG 12 EA BAG"
+    },
+    {
+      "invoiceId": "ocr-invoice-0076",
+      "expectedCount": 6,
+      "extractedCount": 5,
+      "expectedFirst": "CHKN BRST 10LB",
+      "extractedFirst": "CHKN BRST 10 LB"
+    },
+    {
+      "invoiceId": "ocr-invoice-0077",
+      "expectedCount": 7,
+      "extractedCount": 6,
+      "expectedFirst": "CEL 1EACH",
+      "extractedFirst": "CEL 1 EACH"
+    }
+  ]
+}
