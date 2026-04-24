@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice OCR Analyzer</title>
+    <!-- Modern font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    
+</head>
+<body>
+    <div class="glass-bg"></div>
+    <div class="container">
+        <header>
+            <h1>Invoice OCR Analyzer</h1>
+            <p>Upload an invoice image to automatically extract and digitize its data.</p>
+        </header>
+
+        <main>
+            <!-- Upload Area -->
+            <div id="drop-zone" class="drop-zone">
+                <input type="file" id="file-input" accept="image/*" hidden>
+                <div class="drop-zone-content">
+                    <svg class="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                    <p>Drag and drop an invoice image here</p>
+                    <span class="or-separator">or</span>
+                    <button class="btn browse-btn" onclick="document.getElementById('file-input').click()">Browse Files</button>
+                </div>
+                <!-- Image Preview Modal / Area (optional) -->
+                <img id="image-preview" src="" alt="Invoice Preview" style="display: none; max-width:100%; max-height:200px; border-radius: 8px; margin-top: 1rem;">
+            </div>
+
+            <!-- Loading State -->
+            <div id="loading" class="loading hidden">
+                <div class="spinner"></div>
+                <p>Analyzing invoice...</p>
+            </div>
+
+            <!-- Results Section -->
+            <div id="results" class="results hidden">
+                <div class="summary-cards">
+                    <div class="card">
+                        <h3>Vendor</h3>
+                        <p id="vendor-val" class="value">-</p>
+                    </div>
+                    <div class="card">
+                        <h3>Date</h3>
+                        <p id="date-val" class="value">-</p>
+                    </div>
+                    <div class="card">
+                        <h3>Invoice #</h3>
+                        <p id="invoice-val" class="value">-</p>
+                    </div>
+                    <div class="card">
+                        <h3>Total Due</h3>
+                        <p id="total-val" class="value amount">-</p>
+                    </div>
+                </div>
+
+                <div class="table-header-row">
+                    <h2>Line Items</h2>
+                    <button id="export-csv-btn" class="btn outline-btn">
+                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        Export CSV
+                    </button>
+                </div>
+
+                <div class="table-container">
+                    <table id="line-items-table">
+                        <thead>
+                            <tr>
+                                <th>Vendor</th>
+                                <th>Invoice #</th>
+                                <th>Item Name</th>
+                                <th>Quantity</th>
+                                <th>Unit</th>
+                                <th>Unit Price</th>
+                                <th>Line Total</th>
+                                <th class="center">Confidence</th>
+                            </tr>
+                        </thead>
+                        <tbody id="line-items-body">
+                            <!-- Rows will be injected here via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div id="error-message" class="error-toast hidden"></div>
+        </main>
+    </div>
+
+    <!-- Script references -->
+    <script src="/static/app.js"></script>
+</body>
+</html>

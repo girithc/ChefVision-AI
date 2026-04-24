@@ -1,0 +1,6 @@
+opencv-python
+pytesseract
+python-dateutil
+fastapi
+uvicorn
+python-multipart
