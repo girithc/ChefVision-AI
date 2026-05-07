@@ -1,0 +1,25 @@
+Meeting Type: Team-Only
+Date: 2026-03-28
+Start–End Time: 12:30pm - 2:00pm
+Location/Mode: In person
+
+Attendees:
+- Richard Pham
+- Girith Choudhary
+- Shivansh Chhabra
+
+
+1) Accomplished Since Last Meeting
+- Prototype and backend set up
+
+2) Accomplished During This Meeting
+- Done with prototype ready to demo, OCR uploading receipts, datasets selected and backend to add items
+
+3) Issues / Blockers
+- No Issues so far.
+
+4) Action Items
+- Action: More UI and backend works
+
+5) Plans / Goals for Next Meeting
+- Meet the advisor to demo prototype, show UI, continue working on UI and backend.

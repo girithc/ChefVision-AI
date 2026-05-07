@@ -1,0 +1,30 @@
+Meeting Type: Advisor
+Date: 2026-04-30
+Start–End Time: 10:30am - 11:00am
+Location/Mode: Google Meet
+
+Attendees:
+- Richard Pham
+- Girith Choudhary
+- Shivansh Chhabra
+- Wencen Wu
+
+1) Accomplished Since Last Meeting
+- Prototype and dataset selection
+
+2) Accomplished During This Meeting
+- More plans for next semester
+- OK prototype
+- More advices for AI/ML model selections
+
+3) Issues / Blockers
+- No Issues so far.
+
+4) Action Items
+- Action: 
++ UI | Owner: Shivansh, Richard | Due: May 18, 2026 
++ Bakcend | Owner: Girith | Due May 18, 2026
+
+5) Plans / Goals for Next Meeting
+- Complete OCR and Add Item UIs, Dashboard
+- Improvements on the UI and databse
