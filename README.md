@@ -131,5 +131,5 @@ Early-stage productization focused on:
 
 ## Repository Layout
 
-* `app/frontend` contains the original frontend application.
-* `v1` contains the TypeScript backend, normalization service, infrastructure files, datasets, and test harness added for the full ChefVision pipeline.
+* `frontend` contains the frontend application (React + Vite).
+* `server` contains the TypeScript backend, normalization service, infrastructure files, datasets, and test harness for the full ChefVision pipeline.

@@ -175,7 +175,10 @@ async function loadDataset(): Promise<DatasetInvoice[]> {
 }
 
 async function seedCatalogFromDataset(dataset: DatasetInvoice[]) {
-  const pool = new Pool({ connectionString: DATABASE_URL });
+  const pool = new Pool({
+    connectionString: DATABASE_URL,
+    ssl: process.env.DATABASE_SSL === "require" ? { rejectUnauthorized: false } : undefined
+  });
 
   try {
     const canonicals = new Map<string, { canonicalName: string; defaultUnit: string }>();

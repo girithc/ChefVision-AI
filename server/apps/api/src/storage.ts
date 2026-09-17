@@ -1,9 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import { PutObjectCommand, GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
-
-import type { ApiConfig } from "./config.js";
+import type { Pool } from "pg";
 
 export interface InvoiceStorage {
   putObject(key: string, body: Buffer, mimeType: string): Promise<void>;
@@ -25,47 +23,24 @@ export class LocalInvoiceStorage implements InvoiceStorage {
   }
 }
 
-export class S3InvoiceStorage implements InvoiceStorage {
-  private readonly client: S3Client;
+// ponytail: bytea in Postgres is fine for the MVP (~512MB Neon free tier);
+// move invoice_file.content to object storage (S3/Azure Blob) when photo volume outgrows that.
+export class DbInvoiceStorage implements InvoiceStorage {
+  constructor(private readonly pool: Pool) {}
 
-  constructor(private readonly config: Pick<ApiConfig, "AWS_REGION" | "S3_BUCKET" | "S3_ENDPOINT" | "AWS_ACCESS_KEY_ID" | "AWS_SECRET_ACCESS_KEY">) {
-    this.client = new S3Client({
-      region: config.AWS_REGION,
-      endpoint: config.S3_ENDPOINT,
-      forcePathStyle: Boolean(config.S3_ENDPOINT),
-      credentials:
-        config.AWS_ACCESS_KEY_ID && config.AWS_SECRET_ACCESS_KEY
-          ? {
-              accessKeyId: config.AWS_ACCESS_KEY_ID,
-              secretAccessKey: config.AWS_SECRET_ACCESS_KEY
-            }
-          : undefined
-    });
-  }
-
-  async putObject(key: string, body: Buffer, mimeType: string): Promise<void> {
-    await this.client.send(
-      new PutObjectCommand({
-        Bucket: this.config.S3_BUCKET,
-        Key: key,
-        Body: body,
-        ContentType: mimeType
-      })
+  async putObject(key: string, body: Buffer): Promise<void> {
+    await this.pool.query(
+      `insert into invoice_file (storage_key, content) values ($1, $2)
+       on conflict (storage_key) do update set content = excluded.content`,
+      [key, body]
     );
   }
 
   async getObject(key: string): Promise<Buffer> {
-    const response = await this.client.send(
-      new GetObjectCommand({
-        Bucket: this.config.S3_BUCKET,
-        Key: key
-      })
-    );
-
-    const bytes = await response.Body?.transformToByteArray();
-    if (!bytes) {
-      throw new Error(`Missing object body for ${key}`);
+    const result = await this.pool.query("select content from invoice_file where storage_key = $1", [key]);
+    if (result.rowCount === 0) {
+      throw new Error(`Missing stored file for ${key}`);
     }
-    return Buffer.from(bytes);
+    return result.rows[0].content;
   }
 }

@@ -157,6 +157,14 @@ az postgres flexible-server execute \
   --admin-user "${AZURE_POSTGRES_ADMIN}" \
   --admin-password "${AZURE_POSTGRES_PASSWORD}" \
   --database-name "${AZURE_POSTGRES_DB}" \
+  --file-path sql/003_invoice_file_storage.sql \
+  --output none
+
+az postgres flexible-server execute \
+  --name "${AZURE_POSTGRES_SERVER}" \
+  --admin-user "${AZURE_POSTGRES_ADMIN}" \
+  --admin-password "${AZURE_POSTGRES_PASSWORD}" \
+  --database-name "${AZURE_POSTGRES_DB}" \
   --querytext "select count(*) as canonical_count from ingredient_canonical;" \
   --output table
 

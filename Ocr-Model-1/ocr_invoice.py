@@ -4,9 +4,12 @@ import re
 from statistics import mean
 from datetime import datetime
 
+import os
+import shutil
+
 import cv2
 import pytesseract
-pytesseract.pytesseract.tesseract_cmd = r'/opt/homebrew/bin/tesseract'
+pytesseract.pytesseract.tesseract_cmd = os.environ.get('TESSERACT_CMD') or shutil.which('tesseract') or '/opt/homebrew/bin/tesseract'
 from PIL import Image
 from dateutil import parser as date_parser
 

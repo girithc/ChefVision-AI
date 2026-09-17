@@ -6,7 +6,7 @@ import { InvoiceEvents } from "./events.js";
 import { HttpNormalizerClient } from "./normalizer-client.js";
 import { BullMqInvoiceJobQueue } from "./queue.js";
 import { PostgresInvoiceStore } from "./store.postgres.js";
-import { LocalInvoiceStorage, S3InvoiceStorage } from "./storage.js";
+import { DbInvoiceStorage, LocalInvoiceStorage } from "./storage.js";
 
 const pool = new Pool({
   connectionString: apiConfig.DATABASE_URL,
@@ -18,9 +18,9 @@ const app = createApiApp({
   pool,
   store: new PostgresInvoiceStore(pool),
   storage:
-    apiConfig.STORAGE_MODE === "s3"
-      ? new S3InvoiceStorage(apiConfig)
-      : new LocalInvoiceStorage(apiConfig.LOCAL_UPLOAD_DIR),
+    apiConfig.STORAGE_MODE === "local"
+      ? new LocalInvoiceStorage(apiConfig.LOCAL_UPLOAD_DIR)
+      : new DbInvoiceStorage(pool),
   queue: new BullMqInvoiceJobQueue(apiConfig.REDIS_URL),
   normalizer: new HttpNormalizerClient(apiConfig.NORMALIZER_URL),
   events: new InvoiceEvents()

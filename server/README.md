@@ -7,8 +7,8 @@ All-TypeScript backend implementation for the ChefVision AI project.
 - `apps/api`: Node + Express API for auth, invoice uploads, async job orchestration, inventory queries, Excel export, and SSE job status updates.
 - `apps/normalizer`: separate TypeScript microservice for ingredient normalization.
 - `packages/shared`: shared DTOs and utility types.
-- `sql/001_init.sql`: PostgreSQL + pgvector schema and demo seed data.
-- `infra/docker-compose.yml`: local stack with PostgreSQL, Redis, MinIO, API, and normalization service.
+- `sql/`: PostgreSQL + pgvector schema (`001`), 16-d→384-d embedding upgrade for old databases (`002`), and invoice file byte storage (`003`).
+- `infra/docker-compose.yml`: stack with Redis, API, normalization service, OCR app, and frontend, backed by hosted Neon Postgres.
 - `infra/ecs/*.json`: ECS Fargate task definition examples.
 
 ## AI/ML architecture
@@ -37,7 +37,7 @@ This makes AI/ML a core architectural subsystem instead of a single utility func
 ## Architecture
 
 1. A restaurant owner authenticates through the API.
-2. The API accepts an invoice upload and stores the file in local disk or S3-compatible storage.
+2. The API accepts an invoice upload and stores the file bytes in PostgreSQL (`db` mode, default) or on local disk (`local` mode).
 3. The API creates an invoice row and enqueues an async BullMQ job in Redis.
 4. The worker loads the uploaded file, extracts structured line items, and calls the normalization service.
 5. The normalization service preprocesses the raw text, checks alias matches, and uses weighted hybrid scoring on canonical ingredients stored in PostgreSQL + pgvector.
@@ -78,17 +78,19 @@ Environment defaults are baked into both services, but these values are useful t
 
 ```bash
 PORT=4000
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/chefvision
-DATABASE_SSL=disable
+DATABASE_URL=postgresql://user:password@ep-xxx-pooler.region.aws.neon.tech/neondb
+DATABASE_SSL=require
 REDIS_URL=redis://localhost:6379
 JWT_SECRET=chefvision-dev-secret
 NORMALIZER_URL=http://localhost:4001
 EMBEDDING_PROVIDER=minilm
 EMBEDDING_MODEL_ID=onnx-community/all-MiniLM-L6-v2-ONNX
 EMBEDDING_DTYPE=fp32
-STORAGE_MODE=local
-LOCAL_UPLOAD_DIR=./uploads
+STORAGE_MODE=db
+# STORAGE_MODE=local + LOCAL_UPLOAD_DIR=./uploads only for disk-backed mode (Azure path, tests)
 ```
+
+Note: Neon free-tier computes autosuspend when idle — the first request after a cold start eats the wake latency (up to ~1s). If prepared-statement errors ever appear via the pooled (`-pooler`) endpoint, fall back to the direct host.
 
 If you already created the database with the earlier 16-d vector schema, run:
 
@@ -99,19 +101,32 @@ npm run ml:backfill:embeddings
 
 ## Docker stack
 
+Prerequisite: a [Neon](https://neon.tech) Postgres project (pgvector is supported out of the box).
+
 ```bash
+cp infra/.env.example infra/.env
+# paste your Neon connection string (pooled, -pooler host) into infra/.env
+
+# apply the schema (use the direct, non-pooler host for DDL):
+docker run --rm -i postgres:16-alpine psql "$DATABASE_URL" -f sql/001_init.sql
+docker run --rm -i postgres:16-alpine psql "$DATABASE_URL" -f sql/003_invoice_file_storage.sql
+# (002 only needed on databases created with the old 16-dim vector schema)
+
 docker compose -f infra/docker-compose.yml up --build
 ```
 
 Services:
 
+- Frontend: `http://localhost:5173`
 - API: `http://localhost:4000`
 - Normalizer: `http://localhost:4001`
-- MinIO console: `http://localhost:9001`
+- OCR app: `http://localhost:8000`
+
+Invoice file bytes are stored in the `invoice_file` table (`bytea`) — fine for the MVP (~512MB Neon free tier); move to object storage when photo volume outgrows that.
 
 ## Azure CLI deployment
 
-There is also an Azure CLI deployment path in [infra/azure/README.md](/Users/girithchoudhary/Desktop/295/infra/azure/README.md) with a runnable script at [infra/azure/deploy-container-apps.sh](/Users/girithchoudhary/Desktop/295/infra/azure/deploy-container-apps.sh).
+There is also an Azure CLI deployment path in [infra/azure/README.md](infra/azure/README.md) with a runnable script at [infra/azure/deploy-container-apps.sh](infra/azure/deploy-container-apps.sh).
 
 ## Demo login
 
@@ -154,7 +169,7 @@ The e2e test spins up the API and normalization services in-process using the in
 
 ## Synthetic OCR dataset
 
-A deterministic synthetic OCR-output dataset is available in [test/fixtures/fake-ocr](</Users/girithchoudhary/Desktop/295/test/fixtures/fake-ocr>) with 1000 fake invoice text samples plus ground truth line items.
+A deterministic synthetic OCR-output dataset is available in [test/fixtures/fake-ocr](test/fixtures/fake-ocr) with 1000 fake invoice text samples plus ground truth line items.
 
 Generate or regenerate it with:
 
