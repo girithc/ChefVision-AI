@@ -52,7 +52,7 @@ export function SidebarNav({
                 )}
               >
                 {item.icon}
-                <span className="truncate px-1 text-[10px] font-medium leading-none tracking-wide">
+                <span className="truncate px-1 text-xs font-medium leading-none tracking-wide sm:text-sm">
                   {item.label}
                 </span>
               </button>
