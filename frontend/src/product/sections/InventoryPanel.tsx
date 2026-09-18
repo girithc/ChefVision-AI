@@ -8,7 +8,7 @@ const inventory = [
 
 export function InventoryPanel() {
   return (
-    <section className="glass-panel rounded-lg p-6">
+    <section className="glass-panel rounded-l-lg rounded-r-none p-6">
       <h2 className="text-2xl font-semibold tracking-[-0.02em] text-slate-950">
         Inventory snapshot
       </h2>
