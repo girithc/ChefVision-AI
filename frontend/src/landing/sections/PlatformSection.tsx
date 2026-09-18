@@ -28,10 +28,10 @@ export function PlatformSection() {
   return (
     <section id="platform" className="space-y-4">
       <div className="glass-panel rounded-lg p-6">
-        <h2 className="text-2xl font-semibold tracking-[-0.02em] text-white">
+        <h2 className="text-2xl font-semibold tracking-[-0.02em] text-slate-950">
           One connected product
         </h2>
-        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-300">
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
           Every layer is designed around the same ingredient data — from the first
           scanned receipt to the final forecast.
         </p>

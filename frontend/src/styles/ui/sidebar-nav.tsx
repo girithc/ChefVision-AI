@@ -26,16 +26,16 @@ export function SidebarNav({
     <nav
       aria-label="Primary"
       className={cn(
-        'flex h-full flex-col items-center justify-between bg-transparent px-2 py-5 sm:px-3',
+        'flex h-full w-20 flex-col items-center justify-between bg-transparent px-1 py-5 sm:w-24 sm:px-2',
         className,
       )}
     >
-      <div className="flex flex-col items-center gap-3">
-        <div className="flex size-10 items-center justify-center rounded-md border border-emerald-300/25 bg-emerald-400/15 text-lg font-bold text-emerald-200">
+      <div className="flex flex-col items-center gap-4">
+        <div className="flex size-10 items-center justify-center rounded-md border border-emerald-200 bg-emerald-50 text-lg font-bold text-emerald-700">
           C
         </div>
 
-        <div className="mt-4 flex flex-col gap-2">
+        <div className="mt-5 flex flex-col gap-2">
           {items.map((item) => {
             const active = item.id === activeId
             return (
@@ -43,18 +43,16 @@ export function SidebarNav({
                 key={item.id}
                 type="button"
                 onClick={() => onNavigate(item.id)}
-                title={item.label}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'group relative flex h-11 w-11 flex-col items-center justify-center rounded-md border text-slate-300 transition-colors',
+                  'flex h-16 w-full flex-col items-center justify-center gap-1.5 rounded-md border text-slate-600 transition-colors',
                   active
-                    ? 'glass-active border-emerald-300/40 text-emerald-100'
-                    : 'border-transparent hover:border-white/15 hover:bg-white/10 hover:text-white',
+                    ? 'glass-active border-emerald-300 text-emerald-800'
+                    : 'border-transparent hover:border-emerald-200 hover:bg-emerald-50/80 hover:text-emerald-800',
                 )}
               >
                 {item.icon}
-                <span className="sr-only">{item.label}</span>
-                <span className="pointer-events-none absolute left-12 z-20 hidden whitespace-nowrap rounded-md border border-white/10 bg-slate-950/85 px-2 py-1 text-xs text-slate-100 shadow-xl group-hover:block">
+                <span className="truncate px-1 text-[10px] font-medium leading-none tracking-wide">
                   {item.label}
                 </span>
               </button>

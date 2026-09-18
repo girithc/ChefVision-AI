@@ -9,10 +9,10 @@ export function ReceiptIntelligence() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <Badge>Live product</Badge>
-          <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-white">
+          <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-slate-950">
             Receipt intelligence
           </h2>
-          <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-300">
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-600">
             Scan or upload invoices, review normalized items, and publish clean data
             to inventory.
           </p>
@@ -43,11 +43,11 @@ export function ReceiptIntelligence() {
             ].map((receipt) => (
               <div
                 key={receipt.vendor}
-                className="flex items-center justify-between rounded-md border border-white/10 bg-white/5 px-4 py-3"
+                className="flex items-center justify-between rounded-md border border-emerald-100 bg-emerald-50/70 px-4 py-3"
               >
                 <div>
-                  <div className="text-sm font-medium text-white">{receipt.vendor}</div>
-                  <div className="text-xs text-slate-400">{receipt.items}</div>
+                  <div className="text-sm font-medium text-slate-950">{receipt.vendor}</div>
+                  <div className="text-xs text-slate-500">{receipt.items}</div>
                 </div>
                 <Badge variant="neutral">{receipt.status}</Badge>
               </div>
@@ -66,9 +66,9 @@ export function ReceiptIntelligence() {
               { raw: 'oliv oil extr', match: 'Extra Virgin Olive Oil · 3 L', confidence: 94 },
               { raw: 'chk breast', match: 'Chicken Breast · 12 lb', confidence: 91 },
             ].map((item) => (
-              <div key={item.raw} className="rounded-md border border-white/10 bg-white/5 p-3">
-                <div className="font-mono text-xs text-slate-300">{item.raw}</div>
-                <div className="mt-1 text-sm text-white">{item.match}</div>
+              <div key={item.raw} className="rounded-md border border-emerald-100 bg-emerald-50/70 p-3">
+                <div className="font-mono text-xs text-slate-600">{item.raw}</div>
+                <div className="mt-1 text-sm text-slate-950">{item.match}</div>
                 <div className="mt-2 flex items-center gap-2 text-xs text-emerald-200">
                   <Sparkles className="size-3" />
                   {item.confidence}% confidence

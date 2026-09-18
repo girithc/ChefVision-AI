@@ -9,10 +9,10 @@ export function HeroSection() {
           <ChefHat className="size-3.5" />
           AI kitchen intelligence
         </p>
-        <h1 className="text-balance text-5xl font-semibold leading-[1.05] tracking-[-0.04em] text-white sm:text-6xl">
+        <h1 className="text-balance text-5xl font-semibold leading-[1.05] tracking-[-0.04em] text-slate-950 sm:text-6xl">
           Turn receipts into kitchen clarity.
         </h1>
-        <p className="mt-5 max-w-xl text-base leading-relaxed text-slate-300">
+        <p className="mt-5 max-w-xl text-base leading-relaxed text-slate-600">
           ChefVision reads invoices, normalizes ingredients, tracks usage, and helps
           your team see what is happening across every service.
         </p>
@@ -38,10 +38,10 @@ export function HeroSection() {
         ].map((item) => (
           <div
             key={item.label}
-            className="rounded-md border border-white/10 bg-white/5 p-4"
+            className="rounded-md border border-emerald-100 bg-emerald-50/70 p-4"
           >
-            <div className="text-2xl font-semibold text-white">{item.value}</div>
-            <div className="mt-1 text-sm text-slate-400">{item.label}</div>
+            <div className="text-2xl font-semibold text-slate-950">{item.value}</div>
+            <div className="mt-1 text-sm text-slate-500">{item.label}</div>
           </div>
         ))}
       </div>

@@ -9,10 +9,10 @@ const inventory = [
 export function InventoryPanel() {
   return (
     <section className="glass-panel rounded-lg p-6">
-      <h2 className="text-2xl font-semibold tracking-[-0.02em] text-white">
+      <h2 className="text-2xl font-semibold tracking-[-0.02em] text-slate-950">
         Inventory snapshot
       </h2>
-      <p className="mt-2 text-sm text-slate-300">
+      <p className="mt-2 text-sm text-slate-600">
         Current stock after the latest received invoices.
       </p>
 
@@ -26,7 +26,7 @@ export function InventoryPanel() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+              <div className="h-1.5 overflow-hidden rounded-full bg-white/70">
                 <div
                   className="h-full rounded-full bg-emerald-400"
                   style={{ width: item.status }}

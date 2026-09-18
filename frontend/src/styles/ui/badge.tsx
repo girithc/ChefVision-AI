@@ -7,8 +7,8 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: 'border-emerald-300/30 bg-emerald-400/15 text-emerald-100',
-        neutral: 'border-white/15 bg-white/10 text-slate-200',
+        default: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+        neutral: 'border-slate-200 bg-white/75 text-slate-700',
       },
     },
     defaultVariants: { variant: 'default' },
