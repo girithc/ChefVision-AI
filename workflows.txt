@@ -1,0 +1,693 @@
+Restaurant AI/LLM/STT Automation and Inventory Prediction Workflows
+====================================================================
+
+A restaurant has a lot of repetitive operational work that can be automated with OCR, LLMs, speech-to-text (STT), forecasting models, and ingredient normalization.
+
+
+1. Invoice + Purchasing Automation
+-----------------------------------
+
+This is the closest to the current ChefVision implementation.
+
+Workflow:
+
+    Upload/photograph invoice
+    -> OCR extracts vendor/date/items
+    -> LLM cleans and structures line items
+    -> Normalizer maps raw item names to canonical ingredients
+    -> Inventory ledger updates automatically
+    -> System compares vendor prices
+    -> Suggested purchase order is generated
+
+Automations:
+
+- Convert supplier invoices into structured inventory records.
+- Detect duplicate invoices.
+- Normalize supplier product names:
+    "TOMATO ROMA 20 LB" -> Tomato -> 20 lb
+    "CHX BRST BNLS SKNLS" -> Chicken Breast -> skinless, boneless
+- Track price changes by vendor.
+- Recommend the cheapest supplier per item.
+- Flag unusual price increases.
+- Auto-generate purchase orders.
+- Draft vendor emails for:
+  - order placement
+  - missing items
+  - short deliveries
+  - price disputes
+  - credit requests
+
+Value:
+
+- Reduces manual data entry.
+- Improves inventory accuracy.
+- Provides real-time food-cost data.
+
+
+2. Inventory Prediction and Auto-Replenishment
+-----------------------------------------------
+
+This is one of the highest-value AI workflows.
+
+Goal:
+
+Predict how much of each ingredient the restaurant will consume before the next delivery.
+
+Required data:
+
+| Data | Why it matters |
+|---|---|
+| POS sales | Tells you what menu items sold |
+| Recipes/BOM | Converts menu items into ingredients |
+| Current inventory | Tells you what is on hand |
+| Waste logs | Improves actual usage estimates |
+| Prep logs | Tracks internal consumption |
+| Lead times | Determines when to reorder |
+| Delivery schedules | Controls order timing |
+| Weather | Affects traffic and item demand |
+| Holidays/events | Major demand shifts |
+| Reservations/catering | Known future demand |
+| Seasonality | Recurring demand patterns |
+
+Core formula:
+
+    Predicted usage =
+        Predicted menu-item sales x Recipe ingredient quantity
+        + Expected waste
+        + Prep buffer
+
+Then:
+
+    Reorder quantity =
+        Predicted usage until next delivery
+        + Safety stock
+        - Current inventory
+        - Incoming purchase orders
+
+Example:
+
+    Saturday covers: 320
+    Chicken sandwich sales: 95
+    Chicken per sandwich: 0.25 lb
+    Expected chicken usage: 23.75 lb
+    Waste buffer: 5%
+    Safety stock: 10 lb
+    Current chicken: 14 lb
+    Incoming PO: 0
+
+    Suggested order: 25.7 lb -> rounded to 30 lb
+
+Recommended model strategy:
+
+1. Rules + moving averages
+   - Good first version.
+   - Works with limited data.
+
+2. Time-series forecasting
+   - Predict daily covers or menu-item sales.
+   - Models: ARIMA, ETS, Prophet.
+
+3. Gradient-boosted models
+   - Best practical choice once you have 6-12 months of sales.
+   - Models: LightGBM, XGBoost.
+   - Can use weather, holidays, events, day of week, and promotions.
+
+4. Deep learning only if needed
+   - Useful for large chains.
+   - Usually overkill for a single restaurant at first.
+
+Important: the LLM should not be the primary numeric forecaster. Use forecasting models for numbers and LLMs for extraction, summaries, explanations, and recommendations.
+
+
+3. Recipe/BOM Depletion Automation
+----------------------------------
+
+Every menu item should have a recipe:
+
+    Chicken Sandwich
+    -> Chicken Breast: 0.25 lb
+    -> Brioche Bun: 1 each
+    -> Cheddar Cheese: 0.05 lb
+    -> Chipotle Mayo: 0.03 lb
+
+Connect POS sales:
+
+    POS sold 95 chicken sandwiches
+    -> deduct 23.75 lb chicken
+    -> deduct 95 buns
+    -> deduct 4.75 lb cheddar
+
+This produces a live "theoretical inventory" between physical counts.
+
+Benefits:
+
+- Know likely stock levels without counting every item.
+- Detect theft, waste, portioning problems, or invoice errors.
+- Calculate real-time food cost.
+- Predict stockouts before service.
+
+Workflow:
+
+    POS sales
+    -> Recipe/BOM expansion
+    -> Theoretical usage
+    -> Compare against actual inventory
+    -> Flag variance
+
+Example alert:
+
+    Tomato usage is 22% higher than expected over the last 7 days.
+    Possible causes: waste, over-portioning, unlogged transfers, or invoice error.
+
+
+4. Waste Tracking with Photos and Voice
+----------------------------------------
+
+Waste data is critical for inventory prediction.
+
+Voice workflow:
+
+A cook says:
+
+    Waste two pounds of romaine lettuce, spoilage, walk-in cooler.
+
+STT transcribes it:
+
+    waste two pounds of romaine lettuce spoilage walk-in cooler
+
+The LLM converts it to structured JSON:
+
+    {
+      "type": "waste",
+      "ingredient": "romaine lettuce",
+      "quantity": 2,
+      "unit": "lb",
+      "reason": "spoilage",
+      "location": "walk-in cooler",
+      "loggedAt": "2026-09-18T09:20:00-07:00"
+    }
+
+The normalizer maps:
+
+    romaine lettuce -> Romaine Lettuce
+
+Use cases:
+
+- Spoilage
+- Overproduction
+- Kitchen errors
+- Returns
+- Burned/failed dishes
+- Expired products
+- Plate-waste sampling
+
+Value:
+
+- Improves forecasts.
+- Reduces food cost.
+- Identifies operational problems.
+
+
+5. Hands-Free Kitchen Inventory and Prep Notes
+----------------------------------------------
+
+Restaurant staff often do not have time to type.
+
+Example voice input:
+
+    Prepped four trays of chicken, two batches of rice, and we are low on cilantro.
+
+Structured output:
+
+    {
+      "prepLogs": [
+        { "item": "chicken", "quantity": 4, "unit": "tray" },
+        { "item": "rice", "quantity": 2, "unit": "batch" }
+      ],
+      "lowStockAlerts": [
+        { "ingredient": "cilantro" }
+      ]
+    }
+
+Automations:
+
+- Voice-based inventory counts.
+- Voice-based prep logs.
+- Hands-free reorder requests.
+- Low-stock alerts.
+- Daily prep-list generation.
+- Auto-create tomorrow's prep list from forecast.
+
+Example prep list:
+
+    Saturday Prep List
+    - Chicken: marinate 60 lb
+    - Rice: cook 12 batches
+    - Pico de gallo: make 4 batches
+    - Lettuce: chop 30 lb
+
+
+6. Receiving and Delivery Verification
+--------------------------------------
+
+When a delivery arrives:
+
+Workflow:
+
+    Photograph packing slip/invoice
+    -> OCR/LLM extract expected items
+    -> Manager confirms delivery
+    -> System compares ordered vs received
+    -> Flag missing/short/damaged items
+    -> Draft supplier discrepancy email
+
+Example:
+
+    Ordered:
+    - Chicken Breast 40 lb
+    - Romaine 12 cases
+
+    Received:
+    - Chicken Breast 38 lb
+    - Romaine 12 cases
+
+    Discrepancy: 2 lb chicken missing
+
+Automations:
+
+- Auto-update inventory only for received quantities.
+- Track supplier fill rate.
+- Track late deliveries.
+- Track substitution frequency.
+- Generate credit requests.
+
+
+7. Supplier Communication Agent
+-------------------------------
+
+LLMs are very good at drafting and summarizing supplier communication.
+
+Workflows:
+
+- Parse vendor emails.
+- Extract:
+  - price updates
+  - delivery confirmations
+  - out-of-stock items
+  - substitutions
+  - credit memos
+- Summarize daily vendor messages.
+- Draft replies.
+- Auto-update ingredient costs.
+- Compare prices across vendors.
+
+Example summary:
+
+    Supplier updates today:
+    - Sysco increased chicken breast price by 6%.
+    - US Foods is out of roma tomatoes until Thursday.
+    - Restaurant Depot has a cheaper price on olive oil.
+
+Guardrail:
+
+Do not fully auto-send purchase orders at first. Use:
+
+    AI drafts -> human approves -> system sends
+
+
+8. Phone Call and Voicemail Automation with STT
+------------------------------------------------
+
+Restaurants receive many calls that do not need a manager.
+
+Automations:
+
+- Transcribe phone calls.
+- Extract reservations.
+- Extract catering orders.
+- Extract pickup orders.
+- Answer routine questions:
+  - hours
+  - parking
+  - allergens
+  - menu items
+  - current wait time
+- Summarize voicemails.
+- Create follow-up tasks.
+
+Example structured voicemail output:
+
+    {
+      "type": "catering_order",
+      "customerName": "Maria Lopez",
+      "phoneNumber": "555-123-4567",
+      "eventDate": "2026-09-25",
+      "headcount": 75,
+      "items": [
+        { "menuItem": "chicken tacos", "quantity": 75 },
+        { "menuItem": "veggie bowls", "quantity": 25 }
+      ],
+      "needsCallback": true
+    }
+
+The system can then:
+
+- Create a lead.
+- Generate a quote.
+- Convert catering menu items into ingredient demand.
+- Add ingredients to the forecast.
+
+
+9. Reservations and Demand Forecasting
+--------------------------------------
+
+Reservations are valuable future demand signals.
+
+Workflow:
+
+    Reservations
+    -> Forecast expected covers
+    -> Adjust prep plan
+    -> Adjust staffing plan
+    -> Adjust ingredient forecast
+
+Example:
+
+    Friday reservations: 180
+    Historical walk-ins: 90
+    Weather: rain
+    Local event: concert nearby
+
+    Predicted covers: 305
+    Recommended prep increase: +12%
+
+This directly improves inventory prediction.
+
+
+10. Menu Engineering and Food-Cost Analysis
+-------------------------------------------
+
+LLMs can help interpret data, while the backend calculates numbers.
+
+Automations:
+
+- Calculate cost per dish from recipes and latest vendor prices.
+- Track margin per item.
+- Identify unprofitable dishes.
+- Suggest price changes.
+- Suggest substitutions.
+- Generate menu descriptions.
+- Translate menus.
+- Flag allergen changes.
+- Create weekly management summaries.
+
+Example:
+
+    Chicken sandwich:
+    - Food cost: $4.12
+    - Price: $14.00
+    - Margin: $9.88
+    - Food cost %: 29.4%
+
+    Recommendation:
+    Chicken breast prices increased 8%.
+    Consider increasing price to $14.50 or reducing portion from 6 oz to 5.5 oz.
+
+
+11. Staff Scheduling Automation
+-------------------------------
+
+Forecasted demand can drive labor planning.
+
+Workflow:
+
+    Sales forecast
+    -> Forecast covers
+    -> Predict station workload
+    -> Generate shift plan
+    -> Manager approves schedule
+
+Inputs:
+
+- Forecasted sales
+- Reservations
+- Events
+- Weather
+- Historical labor performance
+- Staff availability
+- Labor-cost targets
+
+Example:
+
+    Friday forecast: 310 covers
+
+    Recommended:
+    - 3 line cooks
+    - 1 prep cook
+    - 2 dishwashers
+    - 4 servers
+    - 1 host
+
+
+12. Compliance, Temperature, and Safety Logs
+--------------------------------------------
+
+Voice workflow:
+
+A manager says:
+
+    Walk-in cooler 38 degrees, freezer negative 2, 7:30 AM.
+
+Structured output:
+
+    {
+      "type": "temperature_log",
+      "readings": [
+        { "location": "walk-in cooler", "temperature": 38 },
+        { "location": "freezer", "temperature": -2 }
+      ],
+      "loggedAt": "2026-09-18T07:30:00-07:00"
+    }
+
+Automations:
+
+- Temperature-log reminders.
+- HACCP checklists.
+- Allergen-matrix updates.
+- Cleaning-schedule logs.
+- Incident reports.
+- Compliance summaries.
+
+
+13. Smart Reorder and Purchase-Order Agent
+------------------------------------------
+
+This combines forecasting, inventory, and supplier data.
+
+Workflow:
+
+    Forecast ingredient demand
+    -> Compare against inventory
+    -> Check lead times
+    -> Check par levels
+    -> Check supplier prices
+    -> Draft purchase orders
+    -> Manager approves
+    -> Send to vendors
+
+Example daily summary:
+
+    Suggested Orders
+
+    Sysco:
+    - Chicken Breast: 60 lb
+    - Roma Tomatoes: 8 cases
+    - Olive Oil: 2 cases
+
+    US Foods:
+    - Romaine: 10 cases
+    - Cheddar: 20 lb
+
+    Reason:
+    Saturday forecast is 320 covers.
+    Current chicken stock is 12 lb.
+    Expected usage is 52 lb.
+    Safety stock is 20 lb.
+
+
+14. Stockout Prevention
+-----------------------
+
+Workflow:
+
+    Live POS sales
+    -> Recipe/BOM depletion
+    -> Compare theoretical inventory
+    -> Alert when an item may run out
+    -> Suggest substitute or prep adjustment
+
+Example:
+
+    Warning: salmon will likely run out around 8:30 PM.
+    Expected remaining demand: 12 portions.
+    Current theoretical stock: 7 portions.
+
+    Options:
+    1. Reduce menu availability now.
+    2. Check freezer for reserve.
+    3. Suggest substitute dish to servers.
+
+
+15. End-of-Day Operational Report
+---------------------------------
+
+LLMs are very useful for summarizing daily operations.
+
+Inputs:
+
+- POS sales
+- Waste
+- Inventory variance
+- 86'd items
+- Labor hours
+- Supplier issues
+- Customer reviews
+- Reservations
+
+Example output:
+
+    Daily Operations Summary
+
+    Sales:
+    - Revenue: $18,420
+    - Covers: 305
+    - Average check: $60.39
+
+    Kitchen:
+    - 86'd items: salmon after 8:15 PM
+    - Waste: $212, mainly overproduced rice and expired dairy
+    - Stock risk: chicken, romaine
+
+    Inventory:
+    - Chicken usage 9% above forecast
+    - Romaine usage 14% below forecast
+
+    Recommendations:
+    1. Reduce rice prep by 15% tomorrow.
+    2. Order 50 lb chicken for Saturday.
+    3. Investigate dairy expiration rotation.
+
+
+Recommended ChefVision Build Order
+==================================
+
+The current project already has several useful pieces:
+
+- OCR service
+- API
+- Normalizer
+- Postgres/pgvector
+- Redis
+- Frontend
+
+Phase 1: End-to-end invoice workflow
+
+    Frontend upload image
+    -> API
+    -> OCR service
+    -> structured extraction
+    -> normalizer
+    -> inventory update
+
+This makes the current app immediately useful.
+
+Phase 2: Recipe/BOM + POS integration
+
+Add:
+
+- Recipes
+- Menu items
+- Ingredient quantities
+- Daily POS sales
+- Theoretical inventory depletion
+
+Phase 3: Waste and prep capture
+
+Add:
+
+- Photo waste logging
+- Voice waste logging
+- Prep logs
+- Low-stock alerts
+
+Phase 4: Forecasting
+
+Start with:
+
+- 7-day and 14-day ingredient demand forecasts
+
+Use:
+
+- Sales history
+- Recipes
+- Day of week
+- Weather
+- Holidays
+- Events
+- Current inventory
+
+Phase 5: Reorder automation
+
+Generate:
+
+- Reorder suggestions
+- Purchase-order drafts
+- Vendor comparison
+- Approval workflow
+
+
+Important Guardrails
+====================
+
+For a real restaurant, some actions should require human approval:
+
+- Sending purchase orders
+- Changing menu prices
+- Changing allergen information
+- Modifying payroll or scheduling
+- Responding to legal or health-department issues
+
+Use this pattern:
+
+    AI extracts/analyzes/predicts
+    -> System creates recommendation
+    -> Human approves
+    -> System executes
+
+
+High-Value Workflow Summary
+===========================
+
+1. Invoice OCR and inventory updates
+2. Ingredient normalization
+3. Recipe-based inventory depletion from POS sales
+4. Waste tracking by photo or voice
+5. Demand forecasting per ingredient
+6. Automatic reorder suggestions
+7. Purchase-order drafting
+8. Supplier email parsing and price comparison
+9. Phone/voicemail transcription with structured order extraction
+10. Prep-list generation
+11. Stockout prediction
+12. Menu costing and margin analysis
+13. Staff scheduling based on forecast
+14. End-of-day management reports
+
+Strongest product direction:
+
+    Invoice OCR
+    -> Normalized inventory
+    -> POS sales depletion
+    -> Waste learning
+    -> Ingredient forecasting
+    -> Auto-reorder suggestions
