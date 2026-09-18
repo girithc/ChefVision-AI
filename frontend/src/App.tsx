@@ -14,8 +14,8 @@ export default function App() {
   const [activePage, setActivePage] = useState('landing')
 
   return (
-    <div className="flex h-screen overflow-hidden bg-transparent">
-      <aside className="h-full w-20 shrink-0 bg-transparent sm:w-24">
+    <div className="flex min-h-screen bg-transparent">
+      <aside className="sticky top-0 h-screen w-20 shrink-0 bg-transparent sm:w-24">
         <SidebarNav
           items={navItems}
           activeId={activePage}
@@ -23,7 +23,7 @@ export default function App() {
         />
       </aside>
 
-      <main className="h-full min-w-0 flex-1 overflow-y-auto bg-transparent">
+      <main className="min-w-0 flex-1 bg-transparent">
         {activePage === 'landing' ? (
           <LandingPage />
         ) : activePage === 'product' ? (
