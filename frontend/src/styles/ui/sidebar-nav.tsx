@@ -47,8 +47,8 @@ export function SidebarNav({
                 className={cn(
                   'flex h-16 w-full flex-col items-center justify-center gap-1.5 rounded-md border text-slate-600 transition-colors',
                   active
-                    ? 'glass-active border-emerald-300 text-emerald-800'
-                    : 'border-transparent hover:border-emerald-200 hover:bg-emerald-50/80 hover:text-emerald-800',
+                    ? 'border-emerald-300 text-emerald-800'
+                    : 'border-transparent hover:border-emerald-200 hover:text-emerald-800',
                 )}
               >
                 {item.icon}
