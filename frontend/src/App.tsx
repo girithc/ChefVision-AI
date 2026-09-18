@@ -25,7 +25,7 @@ export default function App() {
       />
 
       <div className="flex h-full">
-        <aside className="h-full shrink-0 w-20 sm:w-24">
+        <aside className="h-full w-20 shrink-0 bg-transparent sm:w-24">
           <SidebarNav
             items={navItems}
             activeId={activePage}

@@ -31,7 +31,7 @@ export function SidebarNav({
       )}
     >
       <div className="flex flex-col items-center gap-4">
-        <div className="flex size-10 items-center justify-center rounded-md border border-emerald-200 bg-emerald-50 text-lg font-bold text-emerald-700">
+        <div className="flex size-10 items-center justify-center text-lg font-bold text-emerald-700">
           C
         </div>
 
@@ -45,10 +45,10 @@ export function SidebarNav({
                 onClick={() => onNavigate(item.id)}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'flex h-16 w-full flex-col items-center justify-center gap-1.5 rounded-md border text-slate-600 transition-colors',
+                  'flex h-16 w-full flex-col items-center justify-center gap-1.5 bg-transparent text-slate-600 transition-colors',
                   active
-                    ? 'border-emerald-300 text-emerald-800'
-                    : 'border-transparent hover:border-emerald-200 hover:text-emerald-800',
+                    ? 'text-emerald-700'
+                    : 'hover:text-emerald-700',
                 )}
               >
                 {item.icon}
