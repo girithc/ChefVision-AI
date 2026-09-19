@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@styl
 
 export function ReceiptIntelligence() {
   return (
-    <section className="glass-panel rounded-l-lg rounded-r-none p-6">
+    <section className="glass-panel rounded-lg p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <Badge>Live product</Badge>

@@ -1,13 +1,13 @@
 import { useState } from 'react'
-import { ChefHat, LayoutDashboard, ScanLine } from 'lucide-react'
+import { LayoutDashboard } from 'lucide-react'
 import { SidebarNav } from '@styles/ui/sidebar-nav'
 import { LandingPage } from '@/landing/LandingPage'
 import { ProductPage } from '@/product/ProductPage'
 
 const navItems = [
-  { id: 'landing', label: 'Landing', icon: <ChefHat className="size-4" /> },
-  { id: 'product', label: 'Product', icon: <ScanLine className="size-4" /> },
-  { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="size-4" /> },
+  { id: 'landing', label: 'Landing' },
+  { id: 'product', label: 'Product' },
+  { id: 'dashboard', label: 'Dashboard' },
 ]
 
 export default function App() {
@@ -15,7 +15,7 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen bg-transparent">
-      <aside className="sticky top-0 h-screen w-20 shrink-0 bg-transparent sm:w-24">
+      <aside className="sticky top-0 h-screen w-24 shrink-0 bg-transparent">
         <SidebarNav
           items={navItems}
           activeId={activePage}
@@ -23,13 +23,14 @@ export default function App() {
         />
       </aside>
 
-      <main className="min-w-0 flex-1 bg-transparent">
+      <main className="ml-2 mr-4 min-w-0 flex-1 bg-transparent border border-dashed border-red-500 sm:ml-3 sm:mr-6">
+        <div>
         {activePage === 'landing' ? (
           <LandingPage />
         ) : activePage === 'product' ? (
           <ProductPage />
         ) : (
-          <div className="flex h-full items-center justify-center px-6">
+          <div className="flex h-full items-center justify-center">
             <div className="glass-panel w-full max-w-md rounded-lg p-8 text-center">
               <LayoutDashboard className="mx-auto size-8 text-emerald-600" />
               <h2 className="mt-4 text-xl font-semibold text-slate-950">Dashboard</h2>
@@ -39,6 +40,7 @@ export default function App() {
             </div>
           </div>
         )}
+        </div>
       </main>
     </div>
   )

@@ -4,7 +4,6 @@ import { cn } from '@styles/lib/utils'
 type SidebarNavItem = {
   id: string
   label: string
-  icon?: React.ReactNode
 }
 
 type SidebarNavProps = {
@@ -26,7 +25,7 @@ export function SidebarNav({
     <nav
       aria-label="Primary"
       className={cn(
-        'flex h-full w-20 flex-col items-center justify-between bg-transparent px-1 py-5 sm:w-24 sm:px-2',
+        'flex h-full w-28 flex-col items-center justify-between bg-transparent py-5 pl-1 pr-2',
         className,
       )}
     >
@@ -35,7 +34,7 @@ export function SidebarNav({
           C
         </div>
 
-        <div className="mt-5 flex flex-col gap-2">
+        <div className="mt-5 flex flex-col items-center gap-2">
           {items.map((item) => {
             const active = item.id === activeId
             return (
@@ -45,14 +44,11 @@ export function SidebarNav({
                 onClick={() => onNavigate(item.id)}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'flex h-16 w-full flex-col items-center justify-center gap-1.5 bg-transparent text-slate-600 transition-colors',
-                  active
-                    ? 'text-emerald-700'
-                    : 'hover:text-emerald-700',
+                  'mx-auto flex size-24 items-center justify-center rounded-md bg-transparent p-2 text-slate-600 transition-colors',
+                  active ? 'text-emerald-700' : 'hover:text-emerald-700',
                 )}
               >
-                {item.icon}
-                <span className="truncate px-1 text-xs font-medium leading-none tracking-wide sm:text-sm">
+                <span className="text-center text-xs font-medium uppercase leading-none tracking-wide">
                   {item.label}
                 </span>
               </button>
