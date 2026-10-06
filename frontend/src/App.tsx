@@ -1,14 +1,13 @@
-import { useEffect } from "react";
+import { Loader2 } from "lucide-react";
 
 import { Layout } from "@/components/Layout";
 import { useApp } from "@/lib/app-context";
-import { matchRoute, navigate, useRoute } from "@/lib/router";
+import { matchRoute, useRoute } from "@/lib/router";
 import { Admin } from "@/pages/Admin";
 import { Dashboard } from "@/pages/Dashboard";
 import { Events } from "@/pages/Events";
 import { Inventory } from "@/pages/Inventory";
 import { Landing } from "@/pages/Landing";
-import { Login } from "@/pages/Login";
 import { ManualEntry } from "@/pages/ManualEntry";
 import { MonthlyView } from "@/pages/MonthlyView";
 import { ReceiptDetails } from "@/pages/ReceiptDetails";
@@ -48,15 +47,15 @@ function AppPage({ path }: { path: string }) {
 export default function App() {
   const path = useRoute();
   const { session } = useApp();
-  const isPublic = path === "/" || path === "/login";
 
-  useEffect(() => {
-    if (!session && !isPublic) navigate("/login");
-    if (session && path === "/login") navigate("/dashboard");
-  }, [session, isPublic, path]);
-
-  if (path === "/") return <Landing />;
-  if (!session) return <Login />;
+  if (path === "/welcome") return <Landing />;
+  if (!session) {
+    return (
+      <div className="flex min-h-screen items-center justify-center gap-2 text-slate-500">
+        <Loader2 className="h-5 w-5 animate-spin text-brand-500" /> Connecting…
+      </div>
+    );
+  }
 
   return (
     <Layout path={path}>

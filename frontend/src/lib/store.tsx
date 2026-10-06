@@ -6,6 +6,10 @@ import { inventoryFromReceipts } from "./planning";
 import { sampleReceipts, seedEvents, seedRecipes } from "./seed";
 import type { InventoryRecord, PlannedEvent, Receipt, Recipe, Session } from "./types";
 
+// Demo accounts seeded by server/sql/001_init.sql
+const DEMO_ACCOUNT = { email: "admin@chefvision.test", password: "secret" };
+const DEMO_RESTAURANT_ID = "11111111-1111-1111-1111-111111111111";
+
 function readStorage<T>(key: string | null, fallback: T): T {
   if (!key) return fallback;
   const raw = localStorage.getItem(key);
@@ -45,7 +49,9 @@ function upsert<T extends { id: string }>(list: T[], item: T): T[] {
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = usePersistentState<Session | null>("chefvision.session", null);
+  // There is no login screen: the app signs in with the demo admin account on load,
+  // falling back to offline mode when the API is unreachable.
+  const [session, setSession] = useState<Session | null>(null);
   const scope = session ? `chefvision.${session.restaurantId}` : null;
 
   const [receipts, setReceipts] = usePersistentState<Receipt[]>(scope && `${scope}.receipts`, []);
@@ -57,10 +63,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const offline = Boolean(session && !session.token);
   const token = session?.token ?? null;
 
-  const signOut = useCallback(() => {
-    setSession(null);
+  const connect = useCallback(async () => {
     setServerInventory([]);
-  }, [setSession]);
+    try {
+      const result = await api.login(DEMO_ACCOUNT.email, DEMO_ACCOUNT.password);
+      setSession({ token: result.token, role: result.role, restaurantId: result.restaurantId, email: DEMO_ACCOUNT.email });
+    } catch {
+      setSession({ token: null, role: "admin", restaurantId: DEMO_RESTAURANT_ID, email: DEMO_ACCOUNT.email });
+    }
+  }, []);
+
+  useEffect(() => {
+    // Sign-in on mount: state is only set after the request settles.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void connect();
+  }, [connect]);
 
   const refreshInventory = useCallback(async () => {
     if (!token) return;
@@ -69,12 +86,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setInventoryError(null);
     } catch (error) {
       if (error instanceof api.ApiError && error.status === 401) {
-        signOut();
+        void connect(); // token expired
         return;
       }
       setInventoryError(error instanceof Error ? error.message : "Failed to load inventory");
     }
-  }, [token, signOut]);
+  }, [token, connect]);
 
   useEffect(() => {
     // Fetch-on-mount: state is only set after the request resolves.
@@ -127,8 +144,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const value: AppState = {
     session,
     offline,
-    signIn: setSession,
-    signOut,
+    reconnect: connect,
 
     receipts,
     saveReceipt: (receipt) => setReceipts((list) => upsert(list, receipt)),

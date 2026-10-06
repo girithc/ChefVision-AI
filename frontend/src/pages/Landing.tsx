@@ -49,10 +49,10 @@ export function Landing() {
       <header className="flex h-20 items-center justify-between">
         <Logo />
         <a
-          href="#/login"
+          href="#/dashboard"
           className="rounded-full bg-slate-900 px-6 py-2 text-sm font-semibold text-white shadow-md transition-all hover:-translate-y-0.5 hover:bg-slate-800"
         >
-          Login
+          Open app
         </a>
       </header>
 
@@ -68,7 +68,7 @@ export function Landing() {
         </p>
         <div className="mt-7 flex justify-center gap-3">
           <a
-            href="#/login"
+            href="#/dashboard"
             className="inline-flex items-center gap-2 rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-brand-500/20 hover:bg-brand-600"
           >
             Get started <ArrowRight className="h-4 w-4" />

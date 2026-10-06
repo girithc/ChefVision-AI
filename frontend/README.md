@@ -1,7 +1,8 @@
 # ChefVision AI — Frontend
 
 React + Vite + Tailwind v4 single-page app that implements screens 1–9 from the project report
-plus a landing page, login, and admin console.
+plus a landing page and admin console. There is no login screen: on load the app signs in to the API
+with the seeded demo admin account (`admin@chefvision.test` / `secret`) and opens the Dashboard.
 
 ## Screens
 
@@ -17,7 +18,7 @@ plus a landing page, login, and admin console.
 | Inventory ledger (UC5) | `#/inventory` | `src/pages/Inventory.tsx` |
 | Inventory Check & Reorder | `#/reorder` | `src/pages/Reorder.tsx` |
 | Admin Console (UC9) | `#/admin` | `src/pages/Admin.tsx` |
-| Landing / Login | `#/`, `#/login` | `src/pages/Landing.tsx`, `src/pages/Login.tsx` |
+| Landing page | `#/welcome` | `src/pages/Landing.tsx` |
 
 The design language, emerald/mint colour palette, and dashboard aesthetic are taken from the
 Figma-style landing page in `design/original-landing-mockup.html`.
@@ -34,7 +35,7 @@ image (`nginx.conf`). The service names (`api`, `ocr`) match `server/infra/docke
 
 | Flow | API call |
 | --- | --- |
-| Login | `POST /auth/login` |
+| Auto sign-in (demo admin) | `POST /auth/login` |
 | Scan Receipt | `POST /ocr/api/extract` → review → `POST /api/invoices/upload` (JSON body) |
 | Receipt status | `GET /api/invoices/:id` (polled until `done`/`error`) |
 | Inventory | `GET /api/inventory` |
@@ -50,8 +51,8 @@ Scan Receipt editor; editing the field clears the flag.
 
 ### Offline demo mode
 
-If the API returns 5xx (e.g. it hasn't booted), the login screen offers "Continue in offline demo
-mode". Receipts, recipes, and events are persisted in `localStorage`, the inventory ledger is
+If the API is unreachable, the app falls back to offline demo mode automatically; the sidebar's
+"Retry connection" button signs in again once the backend is up. Receipts, recipes, and events are persisted in `localStorage`, the inventory ledger is
 computed from receipts in `src/lib/planning.ts`, and the admin console is hidden.
 
 ## Scripts

@@ -5,8 +5,8 @@ import type { InventoryRecord, PlannedEvent, Receipt, Recipe, Session } from "./
 export interface AppState {
   session: Session | null;
   offline: boolean;
-  signIn(session: Session): void;
-  signOut(): void;
+  /** Retries signing in to the API with the demo account (falls back to offline mode). */
+  reconnect(): Promise<void>;
 
   receipts: Receipt[];
   saveReceipt(receipt: Receipt): void;

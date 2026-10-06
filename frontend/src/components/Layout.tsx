@@ -5,9 +5,9 @@ import {
   CalendarRange,
   ChefHat,
   LayoutGrid,
-  LogOut,
   Menu,
   PenLine,
+  RefreshCw,
   ScanLine,
   Settings2,
   ShoppingCart,
@@ -67,7 +67,8 @@ export function Logo({ className }: { className?: string }) {
 }
 
 export function Layout({ path, children }: { path: string; children: ReactNode }) {
-  const { session, offline, signOut } = useApp();
+  const { session, offline, reconnect } = useApp();
+  const [retrying, setRetrying] = useState(false);
   const [open, setOpen] = useState(false);
 
   const sidebar = (
@@ -113,15 +114,20 @@ export function Layout({ path, children }: { path: string; children: ReactNode }
             {offline ? "Offline demo mode" : "Connected to API"}
           </span>
         </div>
-        <div className="truncate text-slate-500">{session?.email}</div>
-        <div className="mb-3 text-slate-400 capitalize">{session?.role}</div>
-        <button
-          type="button"
-          onClick={signOut}
-          className="flex items-center gap-1.5 font-semibold text-slate-500 hover:text-slate-900"
-        >
-          <LogOut className="h-3.5 w-3.5" /> Sign out
-        </button>
+        {offline && (
+          <button
+            type="button"
+            disabled={retrying}
+            onClick={async () => {
+              setRetrying(true);
+              await reconnect();
+              setRetrying(false);
+            }}
+            className="flex items-center gap-1.5 font-semibold text-slate-500 hover:text-slate-900 disabled:opacity-50"
+          >
+            <RefreshCw className={cn("h-3.5 w-3.5", retrying && "animate-spin")} /> Retry connection
+          </button>
+        )}
       </div>
     </aside>
   );
