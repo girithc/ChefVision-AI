@@ -34,6 +34,50 @@ ChefVision AI fixes this by using computer vision and machine learning to read i
 
 ---
 
+## Screenshots
+
+### Dashboard
+All scanned and entered receipts, with spend totals and items needing review.
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+### Scan Receipt
+Upload or photograph a delivery invoice; Model 1 extracts the line items.
+
+![Scan Receipt](docs/screenshots/scan-receipt.png)
+
+### Manual Entry
+Enter supplier, date, invoice number, and line items by hand.
+
+![Manual Entry](docs/screenshots/manual-entry.png)
+
+### Events
+Catering orders and events that drive ingredient requirements.
+
+![Events](docs/screenshots/events.png)
+
+### Recipes
+Per-serving ingredient lists, scaled by each event's serving count.
+
+![Recipes](docs/screenshots/recipes.png)
+
+### Monthly View
+Calendar of the month's events and the combined ingredients they need, week by week.
+
+![Monthly View](docs/screenshots/monthly-view.png)
+
+### Inventory
+Current on-hand quantities computed from saved receipts, with CSV export.
+
+![Inventory](docs/screenshots/inventory.png)
+
+### Check & Reorder
+Planned-event requirements compared against inventory, with shortages and a reorder list.
+
+![Check & Reorder](docs/screenshots/check-reorder.png)
+
+---
+
 ## User Roles (Two “Faces” of the App)
 
 1. **Owner/Admin (Platform Admin)**
