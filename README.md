@@ -131,5 +131,5 @@ Early-stage productization focused on:
 
 ## Repository Layout
 
-* `frontend` contains the frontend application (React + Vite).
+* `product` contains the unified Next.js frontend: the landing page at `/` and product workspace at `/product`.
 * `server` contains the TypeScript backend, normalization service, infrastructure files, datasets, and test harness for the full ChefVision pipeline.
