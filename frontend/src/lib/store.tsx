@@ -112,6 +112,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, [token, setReceipts]);
 
+  useEffect(() => {
+    if (!token) return;
+    void Promise.all([api.listRecipes(token), api.listEvents(token)])
+      .then(([savedRecipes, savedEvents]) => {
+        setRecipes(savedRecipes);
+        setEvents(savedEvents);
+      })
+      .catch((error) => {
+        setInventoryError(error instanceof Error ? error.message : "Failed to load planning data");
+      });
+  }, [token, setRecipes, setEvents]);
+
   const refreshInventory = useCallback(async () => {
     if (!token) return;
     try {
@@ -195,12 +207,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
     loadSampleData: () => setReceipts((list) => [...sampleReceipts(), ...list]),
 
     recipes,
-    saveRecipe: (recipe) => setRecipes((list) => upsert(list, recipe)),
-    deleteRecipe: (id) => setRecipes((list) => list.filter((recipe) => recipe.id !== id)),
+    saveRecipe: (recipe) => {
+      setRecipes((list) => upsert(list, recipe));
+      if (token) void api.saveRecipe(token, recipe);
+    },
+    deleteRecipe: (id) => {
+      setRecipes((list) => list.filter((recipe) => recipe.id !== id));
+      if (token) void api.deleteRecipe(token, id);
+    },
 
     events,
-    saveEvent: (event) => setEvents((list) => upsert(list, event)),
-    deleteEvent: (id) => setEvents((list) => list.filter((event) => event.id !== id)),
+    saveEvent: (event) => {
+      setEvents((list) => upsert(list, event));
+      if (token) void api.saveEvent(token, event);
+    },
+    deleteEvent: (id) => {
+      setEvents((list) => list.filter((event) => event.id !== id));
+      if (token) void api.deleteEvent(token, id);
+    },
 
     inventory,
     inventoryError: offline ? null : inventoryError,

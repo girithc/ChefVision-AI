@@ -1,6 +1,6 @@
 import type { InventoryRecord } from "@chefvision/shared";
 
-import type { InvoiceLineItemRecord, InvoiceRecord, InvoiceStore, UserRecord } from "./store.js";
+import type { InvoiceLineItemRecord, InvoiceRecord, InvoiceStore, PlannedEventRecord, RecipeRecord, UserRecord } from "./store.js";
 
 export class MemoryInvoiceStore implements InvoiceStore {
   private readonly users = new Map<string, UserRecord>();
@@ -10,6 +10,10 @@ export class MemoryInvoiceStore implements InvoiceStore {
   private readonly invoiceLineItems = new Map<string, InvoiceLineItemRecord[]>();
 
   private readonly inventory = new Map<string, InventoryRecord[]>();
+
+  private readonly recipes = new Map<string, RecipeRecord[]>();
+
+  private readonly plannedEvents = new Map<string, PlannedEventRecord[]>();
 
   constructor(users: UserRecord[] = []) {
     users.forEach((user) => this.users.set(user.email, user));
@@ -194,5 +198,48 @@ export class MemoryInvoiceStore implements InvoiceStore {
 
   async listLineItems(invoiceId: string): Promise<InvoiceLineItemRecord[]> {
     return [...(this.invoiceLineItems.get(invoiceId) ?? [])];
+  }
+
+  async listRecipes(restaurantId: string): Promise<RecipeRecord[]> {
+    return structuredClone(this.recipes.get(restaurantId) ?? []);
+  }
+
+  async upsertRecipe(restaurantId: string, recipe: RecipeRecord): Promise<void> {
+    const current = this.recipes.get(restaurantId) ?? [];
+    const next = current.filter((item) => item.id !== recipe.id);
+    next.push(structuredClone(recipe));
+    this.recipes.set(restaurantId, next);
+  }
+
+  async deleteRecipe(restaurantId: string, recipeId: string): Promise<boolean> {
+    const current = this.recipes.get(restaurantId) ?? [];
+    if (!current.some((recipe) => recipe.id === recipeId)) return false;
+    this.recipes.set(restaurantId, current.filter((recipe) => recipe.id !== recipeId));
+    this.plannedEvents.set(
+      restaurantId,
+      (this.plannedEvents.get(restaurantId) ?? []).map((event) => ({
+        ...event,
+        recipes: event.recipes.filter((recipe) => recipe.recipeId !== recipeId)
+      }))
+    );
+    return true;
+  }
+
+  async listEvents(restaurantId: string): Promise<PlannedEventRecord[]> {
+    return structuredClone(this.plannedEvents.get(restaurantId) ?? []);
+  }
+
+  async upsertEvent(restaurantId: string, event: PlannedEventRecord): Promise<void> {
+    const current = this.plannedEvents.get(restaurantId) ?? [];
+    const next = current.filter((item) => item.id !== event.id);
+    next.push(structuredClone(event));
+    this.plannedEvents.set(restaurantId, next);
+  }
+
+  async deleteEvent(restaurantId: string, eventId: string): Promise<boolean> {
+    const current = this.plannedEvents.get(restaurantId) ?? [];
+    if (!current.some((event) => event.id === eventId)) return false;
+    this.plannedEvents.set(restaurantId, current.filter((event) => event.id !== eventId));
+    return true;
   }
 }

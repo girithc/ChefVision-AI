@@ -1,7 +1,7 @@
 import { Pool } from "pg";
 import type { InventoryRecord } from "@chefvision/shared";
 
-import type { InvoiceLineItemRecord, InvoiceRecord, InvoiceStore, UserRecord } from "./store.js";
+import type { InvoiceLineItemRecord, InvoiceRecord, InvoiceStore, PlannedEventRecord, RecipeRecord, UserRecord } from "./store.js";
 
 export class PostgresInvoiceStore implements InvoiceStore {
   constructor(private readonly pool: Pool) {}
@@ -407,6 +407,138 @@ export class PostgresInvoiceStore implements InvoiceStore {
       [invoiceId]
     );
     return result.rows.map(parseInvoiceLineItem);
+  }
+
+  async listRecipes(restaurantId: string): Promise<RecipeRecord[]> {
+    const recipes = await this.pool.query<Omit<RecipeRecord, "ingredients">>(
+      `select id, name, category from recipe where restaurant_id = $1 order by name`,
+      [restaurantId]
+    );
+    const ingredients = await this.pool.query<{
+      recipeId: string;
+      name: string;
+      qtyPerServing: number | string;
+      unit: string;
+    }>(
+      `
+        select recipe_id as "recipeId", name, qty_per_serving as "qtyPerServing", unit
+        from recipe_ingredient
+        where restaurant_id = $1
+        order by recipe_id, position
+      `,
+      [restaurantId]
+    );
+    return recipes.rows.map((recipe) => ({
+      ...recipe,
+      ingredients: ingredients.rows
+        .filter((item) => item.recipeId === recipe.id)
+        .map((item) => ({ ...item, qtyPerServing: parseDecimal(item.qtyPerServing) }))
+    }));
+  }
+
+  async upsertRecipe(restaurantId: string, recipe: RecipeRecord): Promise<void> {
+    const client = await this.pool.connect();
+    try {
+      await client.query("begin");
+      await client.query(
+        `
+          insert into recipe (restaurant_id, id, name, category)
+          values ($1, $2, $3, $4)
+          on conflict (restaurant_id, id) do update
+            set name = excluded.name, category = excluded.category, updated_at = now()
+        `,
+        [restaurantId, recipe.id, recipe.name, recipe.category]
+      );
+      await client.query("delete from recipe_ingredient where restaurant_id = $1 and recipe_id = $2", [restaurantId, recipe.id]);
+      for (const [position, ingredient] of recipe.ingredients.entries()) {
+        await client.query(
+          `
+            insert into recipe_ingredient
+              (restaurant_id, recipe_id, position, name, qty_per_serving, unit)
+            values ($1, $2, $3, $4, $5, $6)
+          `,
+          [restaurantId, recipe.id, position, ingredient.name, ingredient.qtyPerServing, ingredient.unit]
+        );
+      }
+      await client.query("commit");
+    } catch (error) {
+      await client.query("rollback");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async deleteRecipe(restaurantId: string, recipeId: string): Promise<boolean> {
+    const result = await this.pool.query("delete from recipe where restaurant_id = $1 and id = $2", [restaurantId, recipeId]);
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async listEvents(restaurantId: string): Promise<PlannedEventRecord[]> {
+    const events = await this.pool.query<Omit<PlannedEventRecord, "recipes">>(
+      `
+        select id, name, event_date as date, guests, notes
+        from planned_event
+        where restaurant_id = $1
+        order by event_date, name
+      `,
+      [restaurantId]
+    );
+    const recipes = await this.pool.query<{ eventId: string; recipeId: string; servings: number }>(
+      `
+        select event_id as "eventId", recipe_id as "recipeId", servings
+        from event_recipe
+        where restaurant_id = $1
+        order by event_id, recipe_id
+      `,
+      [restaurantId]
+    );
+    return events.rows.map((event) => ({
+      ...event,
+      date: String(event.date).slice(0, 10),
+      guests: Number(event.guests),
+      recipes: recipes.rows
+        .filter((item) => item.eventId === event.id)
+        .map((item) => ({ recipeId: item.recipeId, servings: Number(item.servings) }))
+    }));
+  }
+
+  async upsertEvent(restaurantId: string, event: PlannedEventRecord): Promise<void> {
+    const client = await this.pool.connect();
+    try {
+      await client.query("begin");
+      await client.query(
+        `
+          insert into planned_event (restaurant_id, id, name, event_date, guests, notes)
+          values ($1, $2, $3, $4, $5, $6)
+          on conflict (restaurant_id, id) do update
+            set name = excluded.name,
+                event_date = excluded.event_date,
+                guests = excluded.guests,
+                notes = excluded.notes,
+                updated_at = now()
+        `,
+        [restaurantId, event.id, event.name, event.date, event.guests, event.notes]
+      );
+      await client.query("delete from event_recipe where restaurant_id = $1 and event_id = $2", [restaurantId, event.id]);
+      for (const recipe of event.recipes) {
+        await client.query(
+          `insert into event_recipe (restaurant_id, event_id, recipe_id, servings) values ($1, $2, $3, $4)`,
+          [restaurantId, event.id, recipe.recipeId, recipe.servings]
+        );
+      }
+      await client.query("commit");
+    } catch (error) {
+      await client.query("rollback");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async deleteEvent(restaurantId: string, eventId: string): Promise<boolean> {
+    const result = await this.pool.query("delete from planned_event where restaurant_id = $1 and id = $2", [restaurantId, eventId]);
+    return (result.rowCount ?? 0) > 0;
   }
 }
 

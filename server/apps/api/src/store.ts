@@ -43,6 +43,22 @@ export interface InvoiceLineItemRecord {
   routing: NormalizationRouting | null;
 }
 
+export interface RecipeRecord {
+  id: string;
+  name: string;
+  category: string;
+  ingredients: Array<{ name: string; qtyPerServing: number; unit: string }>;
+}
+
+export interface PlannedEventRecord {
+  id: string;
+  name: string;
+  date: string;
+  guests: number;
+  notes: string;
+  recipes: Array<{ recipeId: string; servings: number }>;
+}
+
 export interface InvoiceStore {
   findUserByEmail(email: string): Promise<UserRecord | null>;
   createInvoice(input: {
@@ -95,6 +111,12 @@ export interface InvoiceStore {
   }): Promise<void>;
   listInventory(restaurantId: string): Promise<InventoryRecord[]>;
   listLineItems(invoiceId: string): Promise<InvoiceLineItemRecord[]>;
+  listRecipes(restaurantId: string): Promise<RecipeRecord[]>;
+  upsertRecipe(restaurantId: string, recipe: RecipeRecord): Promise<void>;
+  deleteRecipe(restaurantId: string, recipeId: string): Promise<boolean>;
+  listEvents(restaurantId: string): Promise<PlannedEventRecord[]>;
+  upsertEvent(restaurantId: string, event: PlannedEventRecord): Promise<void>;
+  deleteEvent(restaurantId: string, eventId: string): Promise<boolean>;
 }
 
 export interface InvoiceStatusPublisher {

@@ -47,6 +47,29 @@ const receiptUpdateSchema = receiptMetadataSchema.pick({
   notes: true
 });
 
+const recipeSchema = z.object({
+  id: z.string().min(1).max(120),
+  name: z.string().trim().min(1).max(200),
+  category: z.string().trim().max(120).default(""),
+  ingredients: z.array(z.object({
+    name: z.string().trim().min(1).max(200),
+    qtyPerServing: z.number().finite().min(0),
+    unit: z.string().trim().min(1).max(40)
+  })).max(200)
+});
+
+const plannedEventSchema = z.object({
+  id: z.string().min(1).max(120),
+  name: z.string().trim().min(1).max(200),
+  date: z.iso.date(),
+  guests: z.number().int().min(0).max(1_000_000),
+  notes: z.string().max(4000).default(""),
+  recipes: z.array(z.object({
+    recipeId: z.string().min(1).max(120),
+    servings: z.number().int().min(0).max(1_000_000)
+  })).max(200)
+});
+
 export function createApiApp(dependencies: {
   config: ApiConfig;
   pool: Pool;
@@ -231,6 +254,78 @@ export function createApiApp(dependencies: {
     }
   });
 
+  app.get("/recipes", requireAuth, async (request: AuthedRequest, response, next) => {
+    try {
+      response.json({ recipes: await store.listRecipes(request.user!.restaurantId) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.put("/recipes/:id", requireAuth, async (request: AuthedRequest, response, next) => {
+    try {
+      const recipe = recipeSchema.parse({ ...request.body, id: String(request.params.id) });
+      await store.upsertRecipe(request.user!.restaurantId, recipe);
+      response.json(recipe);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.delete("/recipes/:id", requireAuth, async (request: AuthedRequest, response, next) => {
+    try {
+      const deleted = await store.deleteRecipe(request.user!.restaurantId, String(request.params.id));
+      if (!deleted) {
+        response.status(404).json({ error: "Recipe not found" });
+        return;
+      }
+      response.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/events", requireAuth, async (request: AuthedRequest, response, next) => {
+    try {
+      response.json({ events: await store.listEvents(request.user!.restaurantId) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/events/stream", requireAuth, (request, response) => {
+    response.setHeader("Content-Type", "text/event-stream");
+    response.setHeader("Cache-Control", "no-cache");
+    response.setHeader("Connection", "keep-alive");
+    response.flushHeaders?.();
+
+    const unsubscribe = events.subscribe(response);
+    request.on("close", unsubscribe);
+  });
+
+  app.put("/events/:id", requireAuth, async (request: AuthedRequest, response, next) => {
+    try {
+      const event = plannedEventSchema.parse({ ...request.body, id: String(request.params.id) });
+      await store.upsertEvent(request.user!.restaurantId, event);
+      response.json(event);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.delete("/events/:id", requireAuth, async (request: AuthedRequest, response, next) => {
+    try {
+      const deleted = await store.deleteEvent(request.user!.restaurantId, String(request.params.id));
+      if (!deleted) {
+        response.status(404).json({ error: "Event not found" });
+        return;
+      }
+      response.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.post("/admin/demo/batch/start", requireAuth, async (request: AuthedRequest, response, next) => {
     try {
       const payload = batchStartSchema.parse(request.body ?? {});
@@ -302,16 +397,6 @@ export function createApiApp(dependencies: {
     } catch (error) {
       next(error);
     }
-  });
-
-  app.get("/events/stream", requireAuth, (request, response) => {
-    response.setHeader("Content-Type", "text/event-stream");
-    response.setHeader("Cache-Control", "no-cache");
-    response.setHeader("Connection", "keep-alive");
-    response.flushHeaders?.();
-
-    const unsubscribe = events.subscribe(response);
-    request.on("close", unsubscribe);
   });
 
   app.use((error: unknown, _request: express.Request, response: express.Response, _next: express.NextFunction) => {
