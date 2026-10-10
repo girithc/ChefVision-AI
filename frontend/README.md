@@ -1,8 +1,8 @@
 # ChefVision AI — Frontend
 
 React + Vite + Tailwind v4 single-page app that implements screens 1–9 from the project report
-plus a landing page and admin console. There is no login screen: on load the app signs in to the API
-with the seeded demo admin account (`admin@chefvision.test` / `secret`) and opens the Dashboard.
+plus a landing page, secure sign-in screen, and admin console. Session data is kept in browser session storage;
+application records are loaded from the tenant-scoped API and PostgreSQL.
 
 ## Screens
 
@@ -35,7 +35,8 @@ image (`nginx.conf`). The service names (`api`, `ocr`) match `server/infra/docke
 
 | Flow | API call |
 | --- | --- |
-| Auto sign-in (demo admin) | `POST /auth/login` |
+| Sign in | `POST /auth/login` |
+| Receipt history | `GET /api/invoices` |
 | Scan Receipt | `POST /ocr/api/extract` → review → `POST /api/invoices/upload` (JSON body) |
 | Receipt status | `GET /api/invoices/:id` (polled until `done`/`error`) |
 | Inventory | `GET /api/inventory` |
@@ -49,11 +50,9 @@ image (`nginx.conf`). The service names (`api`, `ocr`) match `server/infra/docke
 Any field named in `flagged_fields` or any line item below 0.70 confidence is highlighted in the
 Scan Receipt editor; editing the field clears the flag.
 
-### Offline demo mode
-
-If the API is unreachable, the app falls back to offline demo mode automatically; the sidebar's
-"Retry connection" button signs in again once the backend is up. Receipts, recipes, and events are persisted in `localStorage`, the inventory ledger is
-computed from receipts in `src/lib/planning.ts`, and the admin console is hidden.
+Recipes and events use tenant-scoped CRUD endpoints. Local storage is only a client cache; the API database is the
+source of truth after sign-in. The admin console is rendered only for admin sessions, and the API independently
+enforces the role.
 
 ## Scripts
 
@@ -62,6 +61,7 @@ npm install
 npm run dev        # Vite dev server with /api -> :4000 and /ocr -> :8000 proxies
 npm run build      # tsc -b && vite build
 npm run lint
+npm test
 ```
 
 Override the proxy targets with `API_TARGET` / `OCR_TARGET`.

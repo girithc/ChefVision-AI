@@ -38,6 +38,16 @@ The application uses a lightweight FastAPI server to provide the frontend interf
    - The analysis will extract vendor details, totals, and line items.
    - You can review and edit line items directly in the table, and export them natively to a CSV file!
 
+Uploads are limited to JPEG, PNG, and WebP images and default to a 10 MB maximum. Override the limit with
+`MAX_UPLOAD_BYTES`. Uploaded files receive server-generated names and are removed immediately after extraction.
+
+## Checks
+
+```bash
+python3 -m unittest discover -p 'test_*.py'
+python3 -m py_compile app.py ocr_invoice.py upload_policy.py
+```
+
 ## Project Structure
 - `app.py`: The FastAPI server that handles image uploads and routes to the OCR logic.
 - `ocr_invoice.py`: The core script that utilizes OpenCV and Tesseract to extract line items and financial data.
