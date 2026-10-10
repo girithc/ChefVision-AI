@@ -39,7 +39,7 @@ services:
       DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in infra/.env (see infra/.env.example)}
       DATABASE_SSL: require
       REDIS_URL: redis://redis:6379
-      JWT_SECRET: chefvision-dev-secret
+      JWT_SECRET: ${JWT_SECRET:?Set a strong JWT_SECRET in infra/.env}
       NORMALIZER_URL: http://normalizer:4001
       STORAGE_MODE: db
     ports:

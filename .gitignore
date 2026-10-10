@@ -1,3 +1,7 @@
 .neon
 .env.local
+!.env.example
+!server/.env.example
+!server/infra/.env.example
+!Ocr-Model-1/.env.example
 node_modules/
