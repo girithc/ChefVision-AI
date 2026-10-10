@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import {
+  BadgeCheck,
   Boxes,
   CalendarDays,
   CalendarRange,
@@ -11,6 +12,7 @@ import {
   ScanLine,
   Settings2,
   ShoppingCart,
+  UtensilsCrossed,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -58,10 +60,13 @@ const sections: Array<{ title: string; items: NavItem[] }> = [
 export function Logo({ className }: { className?: string }) {
   return (
     <a href="#/" className={cn("flex items-center gap-2.5", className)}>
-      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-white shadow-sm">
-        <ChefHat className="h-5 w-5" />
+      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-white shadow-sm ring-1 ring-white/10">
+        <ChefHat className="h-[19px] w-[19px]" />
       </div>
-      <span className="font-display text-xl font-bold tracking-tight text-slate-900">ChefVision AI</span>
+      <div>
+        <span className="block font-display text-lg leading-5 font-bold tracking-tight text-slate-900">ChefVision AI</span>
+        <span className="block text-[9px] font-bold tracking-[0.18em] text-emerald-600 uppercase">Restaurant ops</span>
+      </div>
     </a>
   );
 }
@@ -72,15 +77,24 @@ export function Layout({ path, children }: { path: string; children: ReactNode }
   const [open, setOpen] = useState(false);
 
   const sidebar = (
-    <aside className="flex h-full w-64 flex-col justify-between border-r border-slate-100 bg-white/80 p-5 backdrop-blur-xl">
+    <aside className="flex h-full w-[17rem] flex-col justify-between border-r border-slate-200/70 bg-white/85 p-5 shadow-[8px_0_30px_-24px_rgba(15,23,42,0.25)] backdrop-blur-xl">
       <div>
-        <Logo className="mb-6 px-1" />
+        <Logo className="mb-5 px-1" />
+        <div className="mb-5 rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-cyan-50/70 p-3">
+          <div className="flex items-center gap-2 text-[11px] font-bold text-emerald-900">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500 text-white shadow-sm">
+              <UtensilsCrossed className="h-3.5 w-3.5" />
+            </span>
+            ChefVision workspace
+          </div>
+          <p className="mt-2 text-[10px] leading-relaxed text-emerald-700/80">Receipts, inventory, and event planning in one workflow.</p>
+        </div>
         {sections.map((section) => {
           const items = section.items.filter((item) => !item.adminOnly || session?.role === "admin");
           if (items.length === 0) return null;
           return (
             <div key={section.title} className="mb-4">
-              <div className="mb-1.5 px-2 text-[10px] font-bold tracking-wider text-slate-400 uppercase">
+              <div className="mb-1.5 px-2 text-[9px] font-bold tracking-[0.16em] text-slate-400 uppercase">
                 {section.title}
               </div>
               <nav className="space-y-1">
@@ -92,11 +106,13 @@ export function Layout({ path, children }: { path: string; children: ReactNode }
                       href={`#${item.path}`}
                       onClick={() => setOpen(false)}
                       className={cn(
-                        "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors",
-                        active ? "bg-brand-500 text-white shadow-xs" : "text-slate-600 hover:bg-slate-100/80",
+                        "group flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] font-semibold transition-all",
+                        active
+                          ? "bg-slate-900 text-white shadow-sm"
+                          : "text-slate-600 hover:bg-emerald-50 hover:text-slate-900",
                       )}
                     >
-                      <item.icon className={cn("h-4 w-4", active ? "text-white" : "text-slate-400")} />
+                      <item.icon className={cn("h-4 w-4", active ? "text-emerald-300" : "text-slate-400 group-hover:text-emerald-600")} />
                       {item.label}
                     </a>
                   );
@@ -108,7 +124,18 @@ export function Layout({ path, children }: { path: string; children: ReactNode }
       </div>
 
       <div className="border-t border-slate-100 pt-4 text-xs">
-        <div className="mb-2 flex items-center gap-1.5 font-medium">
+        <div className="mb-3 flex items-center gap-2 rounded-xl bg-slate-50 p-2.5">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-[11px] font-bold text-white">
+            {session?.email.slice(0, 1).toUpperCase() ?? "C"}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[11px] font-semibold text-slate-800">{session?.email}</span>
+            <span className="flex items-center gap-1 text-[10px] capitalize text-slate-400">
+              <BadgeCheck className="h-3 w-3 text-emerald-500" /> {session?.role}
+            </span>
+          </span>
+        </div>
+        <div className="mb-2 flex items-center gap-1.5 px-1 font-medium">
           <span className={cn("h-1.5 w-1.5 rounded-full", offline ? "bg-amber-500" : "animate-pulse bg-emerald-500")} />
           <span className={offline ? "text-amber-700" : "text-emerald-700"}>
             {offline ? "Offline demo mode" : "Connected to API"}
@@ -150,7 +177,7 @@ export function Layout({ path, children }: { path: string; children: ReactNode }
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </header>
-        <main className="mx-auto w-full max-w-6xl flex-1 p-4 sm:p-8">{children}</main>
+        <main className="mx-auto w-full max-w-[82rem] flex-1 p-4 sm:p-7 lg:p-9">{children}</main>
       </div>
     </div>
   );

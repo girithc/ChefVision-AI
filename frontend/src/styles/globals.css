@@ -28,6 +28,20 @@ body {
     radial-gradient(ellipse at 50% 88%, rgba(209, 250, 229, 0.65) 0%, transparent 56%);
   background-attachment: fixed;
   min-height: 100vh;
+  overflow-x: hidden;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: 2px;
 }
 
 ::selection {
