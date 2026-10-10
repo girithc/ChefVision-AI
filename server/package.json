@@ -16,6 +16,7 @@
     "ml:backfill:embeddings": "node --import tsx scripts/backfill-normalizer-embeddings.ts",
     "test:e2e:ocr-batch": "node --import tsx scripts/run-fake-ocr-e2e.ts",
     "lint": "npm run lint --workspaces --if-present",
+    "pretest": "npm run build --workspace @chefvision/shared",
     "test": "npm run test --workspaces --if-present",
     "test:e2e": "npm run test:e2e --workspace @chefvision/api"
   },
