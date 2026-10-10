@@ -14,6 +14,12 @@ export interface InvoiceRecord {
   storageKey: string;
   originalFilename: string;
   mimeType: string;
+  externalReceiptId: string | null;
+  source: "scan" | "manual";
+  invoiceNumber: string | null;
+  tax: number;
+  tip: number;
+  notes: string;
   supplierName: string | null;
   invoiceDate: string | null;
   status: InvoiceStatus;
@@ -28,6 +34,7 @@ export interface InvoiceLineItemRecord {
   rawName: string;
   rawQty: number;
   rawUnit: string;
+  unitPrice: number;
   canonicalId: string | null;
   canonicalName: string | null;
   normalizedQty: number | null;
@@ -44,13 +51,29 @@ export interface InvoiceStore {
     storageKey: string;
     originalFilename: string;
     mimeType: string;
+    externalReceiptId?: string | null;
+    source?: "scan" | "manual";
+    invoiceNumber?: string | null;
+    tax?: number;
+    tip?: number;
+    notes?: string;
   }): Promise<InvoiceRecord>;
   getInvoiceById(invoiceId: string): Promise<InvoiceRecord | null>;
+  listInvoices(restaurantId: string): Promise<InvoiceRecord[]>;
+  updateInvoiceMetadata(input: {
+    invoiceId: string;
+    restaurantId: string;
+    invoiceNumber: string;
+    tax: number;
+    tip: number;
+    notes: string;
+  }): Promise<boolean>;
+  deleteInvoice(invoiceId: string, restaurantId: string): Promise<boolean>;
   setInvoiceStatus(invoiceId: string, status: InvoiceStatus, errorMessage?: string | null): Promise<void>;
   setExtractedInvoice(invoiceId: string, supplierName: string, invoiceDate: string): Promise<void>;
   replaceLineItems(
     invoiceId: string,
-    items: Array<{ rawName: string; rawQty: number; rawUnit: string }>
+    items: Array<{ rawName: string; rawQty: number; rawUnit: string; unitPrice?: number }>
   ): Promise<InvoiceLineItemRecord[]>;
   saveNormalization(
     lineItemId: string,

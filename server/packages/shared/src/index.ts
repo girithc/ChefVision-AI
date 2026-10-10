@@ -16,6 +16,7 @@ export interface InvoiceLineItemInput {
   rawName: string;
   rawQty: number;
   rawUnit: string;
+  unitPrice?: number;
 }
 
 export interface ExtractedInvoice {

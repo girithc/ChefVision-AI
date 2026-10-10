@@ -4,7 +4,7 @@ import * as api from "./api";
 import { AppContext, type AppState } from "./app-context";
 import { inventoryFromReceipts } from "./planning";
 import { sampleReceipts, seedEvents, seedRecipes } from "./seed";
-import type { InventoryRecord, PlannedEvent, Receipt, Recipe, Session } from "./types";
+import type { InventoryRecord, InvoiceRecord, PlannedEvent, Receipt, Recipe, Session } from "./types";
 
 // Demo accounts seeded by server/sql/001_init.sql
 const DEMO_ACCOUNT = { email: "admin@chefvision.test", password: "secret" };
@@ -48,6 +48,30 @@ function upsert<T extends { id: string }>(list: T[], item: T): T[] {
   return copy;
 }
 
+function receiptFromInvoice(invoice: InvoiceRecord): Receipt {
+  return {
+    id: invoice.externalReceiptId ?? invoice.id,
+    invoiceId: invoice.id,
+    source: invoice.source,
+    supplier: invoice.supplierName ?? "",
+    date: invoice.invoiceDate ?? invoice.createdAt.slice(0, 10),
+    invoiceNumber: invoice.invoiceNumber ?? "",
+    items: invoice.lineItems.map((item) => ({
+      name: item.rawName,
+      qty: item.rawQty,
+      unit: item.rawUnit,
+      unitPrice: item.unitPrice,
+    })),
+    tax: invoice.tax,
+    tip: invoice.tip,
+    notes: invoice.notes,
+    status: invoice.status,
+    statusMessage: invoice.errorMessage ?? undefined,
+    normalized: invoice.lineItems,
+    createdAt: invoice.createdAt,
+  };
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
   // There is no login screen: the app signs in with the demo admin account on load,
   // falling back to offline mode when the API is unreachable.
@@ -78,6 +102,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void connect();
   }, [connect]);
+
+  useEffect(() => {
+    if (!token) return;
+    void api.listInvoices(token).then((invoices) => {
+      setReceipts(invoices.map(receiptFromInvoice));
+    }).catch((error) => {
+      setInventoryError(error instanceof Error ? error.message : "Failed to load receipt history");
+    });
+  }, [token, setReceipts]);
 
   const refreshInventory = useCallback(async () => {
     if (!token) return;
@@ -147,8 +180,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     reconnect: connect,
 
     receipts,
-    saveReceipt: (receipt) => setReceipts((list) => upsert(list, receipt)),
-    deleteReceipt: (id) => setReceipts((list) => list.filter((receipt) => receipt.id !== id)),
+    saveReceipt: (receipt) => {
+      setReceipts((list) => upsert(list, receipt));
+      if (token && receipt.invoiceId) void api.updateInvoice(token, receipt.invoiceId, receipt);
+    },
+    deleteReceipt: (id) => {
+      const receipt = receipts.find((entry) => entry.id === id);
+      setReceipts((list) => list.filter((entry) => entry.id !== id));
+      if (token && receipt?.invoiceId) {
+        void api.deleteInvoice(token, receipt.invoiceId).then(refreshInventory);
+      }
+    },
     submitReceipt,
     loadSampleData: () => setReceipts((list) => [...sampleReceipts(), ...list]),
 

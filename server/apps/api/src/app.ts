@@ -31,6 +31,22 @@ const batchStartSchema = z.object({
   limit: z.coerce.number().int().min(1).max(1000).optional()
 });
 
+const receiptMetadataSchema = z.object({
+  externalReceiptId: z.string().min(1).max(120),
+  source: z.enum(["scan", "manual"]),
+  invoiceNumber: z.string().max(120).default(""),
+  tax: z.number().finite().min(0).default(0),
+  tip: z.number().finite().min(0).default(0),
+  notes: z.string().max(4000).default("")
+});
+
+const receiptUpdateSchema = receiptMetadataSchema.pick({
+  invoiceNumber: true,
+  tax: true,
+  tip: true,
+  notes: true
+});
+
 export function createApiApp(dependencies: {
   config: ApiConfig;
   pool: Pool;
@@ -88,6 +104,11 @@ export function createApiApp(dependencies: {
       }
 
       const invoiceId = randomUUID();
+      const rawMetadata =
+        typeof request.body.metadata === "string" ? JSON.parse(request.body.metadata) : request.body.metadata;
+      const metadata = receiptMetadataSchema.parse(
+        rawMetadata ?? { externalReceiptId: invoiceId, source: "scan" }
+      );
       const storageKey = `${request.user.restaurantId}/invoices/${invoiceId}-${file.originalname}`;
       await storage.putObject(storageKey, file.buffer, file.mimetype);
 
@@ -96,7 +117,8 @@ export function createApiApp(dependencies: {
         restaurantId: request.user.restaurantId,
         storageKey,
         originalFilename: file.originalname,
-        mimeType: file.mimetype
+        mimeType: file.mimetype,
+        ...metadata
       });
 
       events.publish({
@@ -118,6 +140,19 @@ export function createApiApp(dependencies: {
     }
   });
 
+  app.get("/invoices", requireAuth, async (request: AuthedRequest, response, next) => {
+    try {
+      const invoices = await store.listInvoices(request.user!.restaurantId);
+      response.json({
+        invoices: await Promise.all(
+          invoices.map(async (invoice) => ({ ...invoice, lineItems: await store.listLineItems(invoice.id) }))
+        )
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.get("/invoices/:id", requireAuth, async (request: AuthedRequest, response, next) => {
     try {
       const invoiceId = String(request.params.id);
@@ -128,6 +163,37 @@ export function createApiApp(dependencies: {
       }
       const lineItems = await store.listLineItems(invoice.id);
       response.json({ ...invoice, lineItems });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.patch("/invoices/:id", requireAuth, async (request: AuthedRequest, response, next) => {
+    try {
+      const payload = receiptUpdateSchema.parse(request.body);
+      const updated = await store.updateInvoiceMetadata({
+        invoiceId: String(request.params.id),
+        restaurantId: request.user!.restaurantId,
+        ...payload
+      });
+      if (!updated) {
+        response.status(404).json({ error: "Invoice not found" });
+        return;
+      }
+      response.json({ ok: true });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.delete("/invoices/:id", requireAuth, async (request: AuthedRequest, response, next) => {
+    try {
+      const deleted = await store.deleteInvoice(String(request.params.id), request.user!.restaurantId);
+      if (!deleted) {
+        response.status(404).json({ error: "Invoice not found" });
+        return;
+      }
+      response.status(204).send();
     } catch (error) {
       next(error);
     }

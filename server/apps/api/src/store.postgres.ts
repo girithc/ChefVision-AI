@@ -30,6 +30,12 @@ export class PostgresInvoiceStore implements InvoiceStore {
     storageKey: string;
     originalFilename: string;
     mimeType: string;
+    externalReceiptId?: string | null;
+    source?: "scan" | "manual";
+    invoiceNumber?: string | null;
+    tax?: number;
+    tip?: number;
+    notes?: string;
   }): Promise<InvoiceRecord> {
     const result = await this.pool.query<InvoiceRecord>(
       `
@@ -39,15 +45,27 @@ export class PostgresInvoiceStore implements InvoiceStore {
           storage_key,
           original_filename,
           mime_type,
+          external_receipt_id,
+          source,
+          invoice_number,
+          tax,
+          tip,
+          notes,
           status
         )
-        values ($1, $2, $3, $4, $5, 'pending')
+        values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending')
         returning
           id,
           restaurant_id as "restaurantId",
           storage_key as "storageKey",
           original_filename as "originalFilename",
           mime_type as "mimeType",
+          external_receipt_id as "externalReceiptId",
+          source,
+          invoice_number as "invoiceNumber",
+          tax,
+          tip,
+          notes,
           supplier_name as "supplierName",
           invoice_date as "invoiceDate",
           status,
@@ -55,9 +73,21 @@ export class PostgresInvoiceStore implements InvoiceStore {
           created_at as "createdAt",
           updated_at as "updatedAt"
       `,
-      [input.id, input.restaurantId, input.storageKey, input.originalFilename, input.mimeType]
+      [
+        input.id,
+        input.restaurantId,
+        input.storageKey,
+        input.originalFilename,
+        input.mimeType,
+        input.externalReceiptId ?? null,
+        input.source ?? "scan",
+        input.invoiceNumber ?? null,
+        input.tax ?? 0,
+        input.tip ?? 0,
+        input.notes ?? ""
+      ]
     );
-    return result.rows[0];
+    return parseInvoiceRecord(result.rows[0]);
   }
 
   async getInvoiceById(invoiceId: string): Promise<InvoiceRecord | null> {
@@ -69,6 +99,12 @@ export class PostgresInvoiceStore implements InvoiceStore {
           storage_key as "storageKey",
           original_filename as "originalFilename",
           mime_type as "mimeType",
+          external_receipt_id as "externalReceiptId",
+          source,
+          invoice_number as "invoiceNumber",
+          tax,
+          tip,
+          notes,
           supplier_name as "supplierName",
           invoice_date as "invoiceDate",
           status,
@@ -81,7 +117,102 @@ export class PostgresInvoiceStore implements InvoiceStore {
       `,
       [invoiceId]
     );
-    return result.rows[0] ?? null;
+    return result.rows[0] ? parseInvoiceRecord(result.rows[0]) : null;
+  }
+
+  async listInvoices(restaurantId: string): Promise<InvoiceRecord[]> {
+    const result = await this.pool.query<InvoiceRecord>(
+      `
+        select
+          id,
+          restaurant_id as "restaurantId",
+          storage_key as "storageKey",
+          original_filename as "originalFilename",
+          mime_type as "mimeType",
+          external_receipt_id as "externalReceiptId",
+          source,
+          invoice_number as "invoiceNumber",
+          tax,
+          tip,
+          notes,
+          supplier_name as "supplierName",
+          invoice_date as "invoiceDate",
+          status,
+          error_message as "errorMessage",
+          created_at as "createdAt",
+          updated_at as "updatedAt"
+        from invoice
+        where restaurant_id = $1
+        order by created_at desc
+      `,
+      [restaurantId]
+    );
+    return result.rows.map(parseInvoiceRecord);
+  }
+
+  async updateInvoiceMetadata(input: {
+    invoiceId: string;
+    restaurantId: string;
+    invoiceNumber: string;
+    tax: number;
+    tip: number;
+    notes: string;
+  }): Promise<boolean> {
+    const result = await this.pool.query(
+      `
+        update invoice
+        set invoice_number = $3,
+            tax = $4,
+            tip = $5,
+            notes = $6,
+            updated_at = now()
+        where id = $1 and restaurant_id = $2
+      `,
+      [input.invoiceId, input.restaurantId, input.invoiceNumber, input.tax, input.tip, input.notes]
+    );
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async deleteInvoice(invoiceId: string, restaurantId: string): Promise<boolean> {
+    const client = await this.pool.connect();
+    try {
+      await client.query("begin");
+      const invoice = await client.query(
+        "select id from invoice where id = $1 and restaurant_id = $2 for update",
+        [invoiceId, restaurantId]
+      );
+      if (!invoice.rowCount) {
+        await client.query("rollback");
+        return false;
+      }
+      await client.query(
+        `
+          update inventory_ledger inventory
+          set on_hand_qty = greatest(0, inventory.on_hand_qty - consumed.quantity),
+              updated_at = now()
+          from (
+            select canonical_id, sum(normalized_qty) as quantity
+            from invoice_line_item
+            where invoice_id = $1
+              and routing = 'auto_commit'
+              and canonical_id is not null
+              and normalized_qty is not null
+            group by canonical_id
+          ) consumed
+          where inventory.restaurant_id = $2
+            and inventory.canonical_id = consumed.canonical_id
+        `,
+        [invoiceId, restaurantId]
+      );
+      await client.query("delete from invoice where id = $1", [invoiceId]);
+      await client.query("commit");
+      return true;
+    } catch (error) {
+      await client.query("rollback");
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   async setInvoiceStatus(invoiceId: string, status: InvoiceRecord["status"], errorMessage?: string | null): Promise<void> {
@@ -112,7 +243,7 @@ export class PostgresInvoiceStore implements InvoiceStore {
 
   async replaceLineItems(
     invoiceId: string,
-    items: Array<{ rawName: string; rawQty: number; rawUnit: string }>
+    items: Array<{ rawName: string; rawQty: number; rawUnit: string; unitPrice?: number }>
   ): Promise<InvoiceLineItemRecord[]> {
     await this.pool.query("delete from invoice_line_item where invoice_id = $1", [invoiceId]);
     const inserted: InvoiceLineItemRecord[] = [];
@@ -124,15 +255,17 @@ export class PostgresInvoiceStore implements InvoiceStore {
             invoice_id,
             raw_name,
             raw_qty,
-            raw_unit
+            raw_unit,
+            unit_price
           )
-          values ($1, $2, $3, $4)
+          values ($1, $2, $3, $4, $5)
           returning
             id,
             invoice_id as "invoiceId",
             raw_name as "rawName",
             raw_qty as "rawQty",
             raw_unit as "rawUnit",
+            unit_price as "unitPrice",
             canonical_id as "canonicalId",
             canonical_name as "canonicalName",
             normalized_qty as "normalizedQty",
@@ -140,7 +273,7 @@ export class PostgresInvoiceStore implements InvoiceStore {
             confidence,
             routing
         `,
-        [invoiceId, item.rawName, item.rawQty, item.rawUnit]
+        [invoiceId, item.rawName, item.rawQty, item.rawUnit, item.unitPrice ?? 0]
       );
       inserted.push(parseInvoiceLineItem(result.rows[0]));
     }
@@ -260,6 +393,7 @@ export class PostgresInvoiceStore implements InvoiceStore {
           raw_name as "rawName",
           raw_qty as "rawQty",
           raw_unit as "rawUnit",
+          unit_price as "unitPrice",
           canonical_id as "canonicalId",
           canonical_name as "canonicalName",
           normalized_qty as "normalizedQty",
@@ -280,8 +414,20 @@ function parseInvoiceLineItem(row: InvoiceLineItemRecord): InvoiceLineItemRecord
   return {
     ...row,
     rawQty: parseDecimal(row.rawQty),
+    unitPrice: parseDecimal(row.unitPrice),
     normalizedQty: row.normalizedQty === null ? null : parseDecimal(row.normalizedQty),
     confidence: row.confidence === null ? null : parseDecimal(row.confidence)
+  };
+}
+
+function parseInvoiceRecord(row: InvoiceRecord): InvoiceRecord {
+  return {
+    ...row,
+    tax: parseDecimal(row.tax),
+    tip: parseDecimal(row.tip),
+    invoiceDate: row.invoiceDate ? String(row.invoiceDate).slice(0, 10) : null,
+    createdAt: new Date(row.createdAt).toISOString(),
+    updatedAt: new Date(row.updatedAt).toISOString()
   };
 }
 
