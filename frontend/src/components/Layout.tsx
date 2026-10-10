@@ -6,9 +6,9 @@ import {
   CalendarRange,
   ChefHat,
   LayoutGrid,
+  LogOut,
   Menu,
   PenLine,
-  RefreshCw,
   ScanLine,
   Settings2,
   ShoppingCart,
@@ -72,8 +72,7 @@ export function Logo({ className }: { className?: string }) {
 }
 
 export function Layout({ path, children }: { path: string; children: ReactNode }) {
-  const { session, offline, reconnect } = useApp();
-  const [retrying, setRetrying] = useState(false);
+  const { session, signOut } = useApp();
   const [open, setOpen] = useState(false);
 
   const sidebar = (
@@ -135,26 +134,14 @@ export function Layout({ path, children }: { path: string; children: ReactNode }
             </span>
           </span>
         </div>
-        <div className="mb-2 flex items-center gap-1.5 px-1 font-medium">
-          <span className={cn("h-1.5 w-1.5 rounded-full", offline ? "bg-amber-500" : "animate-pulse bg-emerald-500")} />
-          <span className={offline ? "text-amber-700" : "text-emerald-700"}>
-            {offline ? "Offline demo mode" : "Connected to API"}
+        <div className="flex items-center justify-between px-1">
+          <span className="flex items-center gap-1.5 font-medium text-emerald-700">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" /> Connected to API
           </span>
-        </div>
-        {offline && (
-          <button
-            type="button"
-            disabled={retrying}
-            onClick={async () => {
-              setRetrying(true);
-              await reconnect();
-              setRetrying(false);
-            }}
-            className="flex items-center gap-1.5 font-semibold text-slate-500 hover:text-slate-900 disabled:opacity-50"
-          >
-            <RefreshCw className={cn("h-3.5 w-3.5", retrying && "animate-spin")} /> Retry connection
+          <button type="button" onClick={signOut} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="Sign out">
+            <LogOut className="h-3.5 w-3.5" />
           </button>
-        )}
+        </div>
       </div>
     </aside>
   );

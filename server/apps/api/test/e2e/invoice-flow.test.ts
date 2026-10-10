@@ -45,7 +45,7 @@ test("async invoice pipeline stores, normalizes, and updates inventory", async (
     {
       id: "user-1",
       email: "owner@chefvision.test",
-      password: "secret",
+      passwordHash: "scrypt$c4cbb07071873ce0d8840c8963d5107a$9a828f092f9514c524b14981c3c94d5d2b96a5686f2a99815585948dcdaaaa3fb58f3edbcda1f3fb30edcc1cd99dc18bbf9deeb8a945bef83d7b4b69615a760f",
       restaurantId: "rest-1",
       role: "owner"
     }
@@ -64,7 +64,7 @@ test("async invoice pipeline stores, normalizes, and updates inventory", async (
       }
     }
   };
-  events.subscribe(eventSink as never);
+  events.subscribe(eventSink as never, "rest-1");
 
   await queue.start((payload) =>
     processInvoiceJob(payload.invoiceId, {

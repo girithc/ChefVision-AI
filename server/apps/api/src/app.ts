@@ -9,7 +9,7 @@ import multer from "multer";
 import { z } from "zod";
 import type { Pool } from "pg";
 
-import { createToken, authMiddleware, authenticateUser, type AuthedRequest } from "./auth.js";
+import { adminMiddleware, createToken, authMiddleware, authenticateUser, type AuthedRequest } from "./auth.js";
 import type { ApiConfig } from "./config.js";
 import { DashboardRepository } from "./dashboard-repository.js";
 import type { InvoiceEvents } from "./events.js";
@@ -20,7 +20,7 @@ import type { InvoiceStore } from "./store.js";
 import type { InvoiceStorage } from "./storage.js";
 import { processInvoiceJob } from "./worker.js";
 
-const upload = multer({ storage: multer.memoryStorage() });
+const allowedUploadTypes = new Set(["application/json", "text/plain", "text/csv"]);
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -82,6 +82,17 @@ export function createApiApp(dependencies: {
   const { config, pool, store, storage, queue, normalizer, events } = dependencies;
   const app = express();
   const requireAuth = authMiddleware(config);
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: config.MAX_UPLOAD_BYTES, files: 1, fields: 4 },
+    fileFilter: (_request, file, callback) => {
+      if (allowedUploadTypes.has(file.mimetype)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Unsupported upload type: ${file.mimetype}`));
+      }
+    }
+  });
   const uiDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../src/ui");
   const batchManager = new LiveOcrBatchManager({ pool, store, storage, queue });
   const dashboard = new DashboardRepository(pool, config);
@@ -146,6 +157,7 @@ export function createApiApp(dependencies: {
 
       events.publish({
         invoiceId,
+        restaurantId: request.user.restaurantId,
         status: "pending",
         message: "Invoice uploaded and queued",
         at: new Date().toISOString()
@@ -293,13 +305,13 @@ export function createApiApp(dependencies: {
     }
   });
 
-  app.get("/events/stream", requireAuth, (request, response) => {
+  app.get("/events/stream", requireAuth, (request: AuthedRequest, response) => {
     response.setHeader("Content-Type", "text/event-stream");
     response.setHeader("Cache-Control", "no-cache");
     response.setHeader("Connection", "keep-alive");
     response.flushHeaders?.();
 
-    const unsubscribe = events.subscribe(response);
+    const unsubscribe = events.subscribe(response, request.user!.restaurantId);
     request.on("close", unsubscribe);
   });
 
@@ -326,7 +338,7 @@ export function createApiApp(dependencies: {
     }
   });
 
-  app.post("/admin/demo/batch/start", requireAuth, async (request: AuthedRequest, response, next) => {
+  app.post("/admin/demo/batch/start", requireAuth, adminMiddleware, async (request: AuthedRequest, response, next) => {
     try {
       const payload = batchStartSchema.parse(request.body ?? {});
       const status = await batchManager.start({
@@ -339,24 +351,25 @@ export function createApiApp(dependencies: {
     }
   });
 
-  app.get("/admin/demo/batch/status", requireAuth, (_request, response) => {
-    response.json(batchManager.getStatus());
+  app.get("/admin/demo/batch/status", requireAuth, adminMiddleware, (request: AuthedRequest, response) => {
+    response.json(batchManager.getStatus(request.user!.restaurantId));
   });
 
-  app.get("/admin/demo/report", requireAuth, async (_request, response, next) => {
+  app.get("/admin/demo/report", requireAuth, adminMiddleware, async (request: AuthedRequest, response, next) => {
     try {
-      response.json(await batchManager.getLatestReport());
+      response.json(await batchManager.getLatestReport(request.user!.restaurantId));
     } catch (error) {
       next(error);
     }
   });
 
-  app.get("/admin/demo/pipeline", requireAuth, async (_request, response, next) => {
+  app.get("/admin/demo/pipeline", requireAuth, adminMiddleware, async (request: AuthedRequest, response, next) => {
     try {
-      const latestReport = await batchManager.getLatestReport();
+      const restaurantId = request.user!.restaurantId;
+      const latestReport = await batchManager.getLatestReport(restaurantId);
       response.json(
         await dashboard.getPipelineData({
-          batchStatus: batchManager.getStatus(),
+          batchStatus: batchManager.getStatus(restaurantId),
           latestReport
         })
       );
@@ -365,11 +378,11 @@ export function createApiApp(dependencies: {
     }
   });
 
-  app.get("/admin/demo/invoice/:id", requireAuth, async (request: AuthedRequest, response, next) => {
+  app.get("/admin/demo/invoice/:id", requireAuth, adminMiddleware, async (request: AuthedRequest, response, next) => {
     try {
       const invoiceId = String(request.params.id);
       const invoice = await store.getInvoiceById(invoiceId);
-      if (!invoice) {
+      if (!invoice || invoice.restaurantId !== request.user!.restaurantId) {
         response.status(404).json({ error: "Invoice not found" });
         return;
       }
@@ -387,11 +400,12 @@ export function createApiApp(dependencies: {
     }
   });
 
-  app.get("/admin/demo/results", requireAuth, async (_request, response, next) => {
+  app.get("/admin/demo/results", requireAuth, adminMiddleware, async (_request: AuthedRequest, response, next) => {
     try {
       response.json(
         await dashboard.getResultsData({
-          latestReport: await batchManager.getLatestReport()
+          latestReport: await batchManager.getLatestReport(_request.user!.restaurantId),
+          restaurantId: _request.user!.restaurantId
         })
       );
     } catch (error) {
@@ -401,7 +415,12 @@ export function createApiApp(dependencies: {
 
   app.use((error: unknown, _request: express.Request, response: express.Response, _next: express.NextFunction) => {
     const message = error instanceof Error ? error.message : "Unknown error";
-    response.status(400).json({ error: message });
+    const status = error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE"
+      ? 413
+      : message.startsWith("Unsupported upload type:")
+        ? 415
+        : 400;
+    response.status(status).json({ error: message });
   });
 
   void queue.start((payload) =>

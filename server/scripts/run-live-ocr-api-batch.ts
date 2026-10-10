@@ -243,7 +243,7 @@ async function login(): Promise<string> {
     },
     body: JSON.stringify({
       email: "owner@chefvision.test",
-      password: "secret"
+      password: process.env.CHEFVISION_DEMO_PASSWORD ?? "ChefVisionDemo!2026"
     })
   });
 

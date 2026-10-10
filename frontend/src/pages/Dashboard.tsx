@@ -10,7 +10,7 @@ import { needsReviewCount, statusBadge } from "@/lib/receipt-status";
 
 /** Screen 1: receipts list with summary statistics, search, and quick delete. */
 export function Dashboard() {
-  const { receipts, inventory, events, offline, deleteReceipt, loadSampleData } = useApp();
+  const { receipts, inventory, events, offline, deleteReceipt } = useApp();
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -112,9 +112,6 @@ export function Dashboard() {
               <div className="flex gap-2">
                 <Button icon={ScanLine} onClick={() => navigate("/scan")}>
                   Scan receipt
-                </Button>
-                <Button variant="secondary" onClick={loadSampleData}>
-                  Load sample data
                 </Button>
               </div>
             }

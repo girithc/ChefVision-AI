@@ -12,7 +12,7 @@ export class PostgresInvoiceStore implements InvoiceStore {
         select
           id,
           email,
-          password_hash as password,
+          password_hash as "passwordHash",
           restaurant_id as "restaurantId",
           role
         from app_user

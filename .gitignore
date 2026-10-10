@@ -5,3 +5,5 @@
 !server/infra/.env.example
 !Ocr-Model-1/.env.example
 node_modules/
+__pycache__/
+*.pyc

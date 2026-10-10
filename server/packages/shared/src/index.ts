@@ -93,6 +93,7 @@ export interface InventoryRecord {
 
 export interface InvoiceEventPayload {
   invoiceId: string;
+  restaurantId: string;
   status: InvoiceStatus;
   message: string;
   at: string;

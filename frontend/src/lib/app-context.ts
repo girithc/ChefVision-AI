@@ -4,16 +4,17 @@ import type { InventoryRecord, PlannedEvent, Receipt, Recipe, Session } from "./
 
 export interface AppState {
   session: Session | null;
+  authenticating: boolean;
+  authError: string | null;
   offline: boolean;
-  /** Retries signing in to the API with the demo account (falls back to offline mode). */
-  reconnect(): Promise<void>;
+  signIn(email: string, password: string): Promise<boolean>;
+  signOut(): void;
 
   receipts: Receipt[];
   saveReceipt(receipt: Receipt): void;
   deleteReceipt(id: string): void;
   /** Uploads to the API (if online) and records normalization results on the receipt. */
   submitReceipt(receipt: Receipt): Promise<Receipt>;
-  loadSampleData(): void;
 
   recipes: Recipe[];
   saveRecipe(recipe: Recipe): void;

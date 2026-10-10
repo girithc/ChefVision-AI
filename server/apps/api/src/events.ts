@@ -11,8 +11,9 @@ export class InvoiceEvents implements InvoiceStatusPublisher {
     this.emitter.emit("invoice", payload);
   }
 
-  subscribe(response: Response): () => void {
+  subscribe(response: Response, restaurantId: string): () => void {
     const handler = (payload: InvoiceEventPayload) => {
+      if (payload.restaurantId !== restaurantId) return;
       response.write(`event: invoice-status\n`);
       response.write(`data: ${JSON.stringify(payload)}\n\n`);
     };

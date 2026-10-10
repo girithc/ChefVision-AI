@@ -85,6 +85,8 @@ export const LIVE_OCR_DATASET_PATH = path.resolve("test/fixtures/fake-ocr/fake-o
 export const LIVE_OCR_REPORT_PATH = path.resolve("test/fixtures/fake-ocr/fake-ocr-live-api-report.json");
 
 export class LiveOcrBatchManager {
+  private restaurantId: string | null = null;
+
   private status: LiveBatchStatus = {
     state: "idle",
     stage: "idle",
@@ -114,14 +116,32 @@ export class LiveOcrBatchManager {
     }
   ) {}
 
-  getStatus(): LiveBatchStatus {
+  getStatus(restaurantId: string): LiveBatchStatus {
+    if (this.restaurantId !== restaurantId) {
+      return {
+        ...this.status,
+        state: "idle",
+        stage: "idle",
+        startedAt: null,
+        finishedAt: null,
+        errorMessage: null,
+        totalInvoices: 0,
+        processedInvoices: 0,
+        completedInvoices: 0,
+        failedInvoices: 0,
+        currentInvoiceId: null,
+        currentDatasetInvoiceId: null,
+        logs: []
+      };
+    }
     return {
       ...this.status,
       logs: [...this.status.logs]
     };
   }
 
-  async getLatestReport(): Promise<LiveBatchReport | null> {
+  async getLatestReport(restaurantId: string): Promise<LiveBatchReport | null> {
+    if (this.restaurantId !== restaurantId) return null;
     if (this.latestReport) {
       return this.latestReport;
     }
@@ -141,6 +161,7 @@ export class LiveOcrBatchManager {
     }
 
     const limit = clampLimit(input.limit ?? 1000);
+    this.restaurantId = input.restaurantId;
     this.status = {
       ...this.status,
       state: "running",
@@ -161,7 +182,7 @@ export class LiveOcrBatchManager {
     this.pushLog(`Starting live OCR batch for up to ${limit} invoices.`);
     void this.run(input.restaurantId, limit);
 
-    return this.getStatus();
+    return this.getStatus(input.restaurantId);
   }
 
   private async run(restaurantId: string, limit: number) {
