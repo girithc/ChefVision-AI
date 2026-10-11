@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main, integration/complete-mvp]
+    branches: [main, models-mvp]
 
 permissions:
   contents: read
