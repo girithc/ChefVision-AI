@@ -2,6 +2,8 @@ node_modules
 dist
 .env
 .env.*
+!.env.example
+!infra/.env.example
 coverage
 uploads
 .DS_Store

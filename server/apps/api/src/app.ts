@@ -9,7 +9,7 @@ import multer from "multer";
 import { z } from "zod";
 import type { Pool } from "pg";
 
-import { createToken, authMiddleware, authenticateUser, type AuthedRequest } from "./auth.js";
+import { adminMiddleware, createToken, authMiddleware, authenticateUser, type AuthedRequest } from "./auth.js";
 import type { ApiConfig } from "./config.js";
 import { DashboardRepository } from "./dashboard-repository.js";
 import type { InvoiceEvents } from "./events.js";
@@ -20,7 +20,7 @@ import type { InvoiceStore } from "./store.js";
 import type { InvoiceStorage } from "./storage.js";
 import { processInvoiceJob } from "./worker.js";
 
-const upload = multer({ storage: multer.memoryStorage() });
+const allowedUploadTypes = new Set(["application/json", "text/plain", "text/csv"]);
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -29,6 +29,45 @@ const loginSchema = z.object({
 
 const batchStartSchema = z.object({
   limit: z.coerce.number().int().min(1).max(1000).optional()
+});
+
+const receiptMetadataSchema = z.object({
+  externalReceiptId: z.string().min(1).max(120),
+  source: z.enum(["scan", "manual"]),
+  invoiceNumber: z.string().max(120).default(""),
+  tax: z.number().finite().min(0).default(0),
+  tip: z.number().finite().min(0).default(0),
+  notes: z.string().max(4000).default("")
+});
+
+const receiptUpdateSchema = receiptMetadataSchema.pick({
+  invoiceNumber: true,
+  tax: true,
+  tip: true,
+  notes: true
+});
+
+const recipeSchema = z.object({
+  id: z.string().min(1).max(120),
+  name: z.string().trim().min(1).max(200),
+  category: z.string().trim().max(120).default(""),
+  ingredients: z.array(z.object({
+    name: z.string().trim().min(1).max(200),
+    qtyPerServing: z.number().finite().min(0),
+    unit: z.string().trim().min(1).max(40)
+  })).max(200)
+});
+
+const plannedEventSchema = z.object({
+  id: z.string().min(1).max(120),
+  name: z.string().trim().min(1).max(200),
+  date: z.iso.date(),
+  guests: z.number().int().min(0).max(1_000_000),
+  notes: z.string().max(4000).default(""),
+  recipes: z.array(z.object({
+    recipeId: z.string().min(1).max(120),
+    servings: z.number().int().min(0).max(1_000_000)
+  })).max(200)
 });
 
 export function createApiApp(dependencies: {
@@ -43,6 +82,17 @@ export function createApiApp(dependencies: {
   const { config, pool, store, storage, queue, normalizer, events } = dependencies;
   const app = express();
   const requireAuth = authMiddleware(config);
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: config.MAX_UPLOAD_BYTES, files: 1, fields: 4 },
+    fileFilter: (_request, file, callback) => {
+      if (allowedUploadTypes.has(file.mimetype)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Unsupported upload type: ${file.mimetype}`));
+      }
+    }
+  });
   const uiDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../src/ui");
   const batchManager = new LiveOcrBatchManager({ pool, store, storage, queue });
   const dashboard = new DashboardRepository(pool, config);
@@ -88,6 +138,11 @@ export function createApiApp(dependencies: {
       }
 
       const invoiceId = randomUUID();
+      const rawMetadata =
+        typeof request.body.metadata === "string" ? JSON.parse(request.body.metadata) : request.body.metadata;
+      const metadata = receiptMetadataSchema.parse(
+        rawMetadata ?? { externalReceiptId: invoiceId, source: "scan" }
+      );
       const storageKey = `${request.user.restaurantId}/invoices/${invoiceId}-${file.originalname}`;
       await storage.putObject(storageKey, file.buffer, file.mimetype);
 
@@ -96,11 +151,13 @@ export function createApiApp(dependencies: {
         restaurantId: request.user.restaurantId,
         storageKey,
         originalFilename: file.originalname,
-        mimeType: file.mimetype
+        mimeType: file.mimetype,
+        ...metadata
       });
 
       events.publish({
         invoiceId,
+        restaurantId: request.user.restaurantId,
         status: "pending",
         message: "Invoice uploaded and queued",
         at: new Date().toISOString()
@@ -118,6 +175,19 @@ export function createApiApp(dependencies: {
     }
   });
 
+  app.get("/invoices", requireAuth, async (request: AuthedRequest, response, next) => {
+    try {
+      const invoices = await store.listInvoices(request.user!.restaurantId);
+      response.json({
+        invoices: await Promise.all(
+          invoices.map(async (invoice) => ({ ...invoice, lineItems: await store.listLineItems(invoice.id) }))
+        )
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.get("/invoices/:id", requireAuth, async (request: AuthedRequest, response, next) => {
     try {
       const invoiceId = String(request.params.id);
@@ -128,6 +198,37 @@ export function createApiApp(dependencies: {
       }
       const lineItems = await store.listLineItems(invoice.id);
       response.json({ ...invoice, lineItems });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.patch("/invoices/:id", requireAuth, async (request: AuthedRequest, response, next) => {
+    try {
+      const payload = receiptUpdateSchema.parse(request.body);
+      const updated = await store.updateInvoiceMetadata({
+        invoiceId: String(request.params.id),
+        restaurantId: request.user!.restaurantId,
+        ...payload
+      });
+      if (!updated) {
+        response.status(404).json({ error: "Invoice not found" });
+        return;
+      }
+      response.json({ ok: true });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.delete("/invoices/:id", requireAuth, async (request: AuthedRequest, response, next) => {
+    try {
+      const deleted = await store.deleteInvoice(String(request.params.id), request.user!.restaurantId);
+      if (!deleted) {
+        response.status(404).json({ error: "Invoice not found" });
+        return;
+      }
+      response.status(204).send();
     } catch (error) {
       next(error);
     }
@@ -165,7 +266,79 @@ export function createApiApp(dependencies: {
     }
   });
 
-  app.post("/admin/demo/batch/start", requireAuth, async (request: AuthedRequest, response, next) => {
+  app.get("/recipes", requireAuth, async (request: AuthedRequest, response, next) => {
+    try {
+      response.json({ recipes: await store.listRecipes(request.user!.restaurantId) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.put("/recipes/:id", requireAuth, async (request: AuthedRequest, response, next) => {
+    try {
+      const recipe = recipeSchema.parse({ ...request.body, id: String(request.params.id) });
+      await store.upsertRecipe(request.user!.restaurantId, recipe);
+      response.json(recipe);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.delete("/recipes/:id", requireAuth, async (request: AuthedRequest, response, next) => {
+    try {
+      const deleted = await store.deleteRecipe(request.user!.restaurantId, String(request.params.id));
+      if (!deleted) {
+        response.status(404).json({ error: "Recipe not found" });
+        return;
+      }
+      response.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/events", requireAuth, async (request: AuthedRequest, response, next) => {
+    try {
+      response.json({ events: await store.listEvents(request.user!.restaurantId) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/events/stream", requireAuth, (request: AuthedRequest, response) => {
+    response.setHeader("Content-Type", "text/event-stream");
+    response.setHeader("Cache-Control", "no-cache");
+    response.setHeader("Connection", "keep-alive");
+    response.flushHeaders?.();
+
+    const unsubscribe = events.subscribe(response, request.user!.restaurantId);
+    request.on("close", unsubscribe);
+  });
+
+  app.put("/events/:id", requireAuth, async (request: AuthedRequest, response, next) => {
+    try {
+      const event = plannedEventSchema.parse({ ...request.body, id: String(request.params.id) });
+      await store.upsertEvent(request.user!.restaurantId, event);
+      response.json(event);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.delete("/events/:id", requireAuth, async (request: AuthedRequest, response, next) => {
+    try {
+      const deleted = await store.deleteEvent(request.user!.restaurantId, String(request.params.id));
+      if (!deleted) {
+        response.status(404).json({ error: "Event not found" });
+        return;
+      }
+      response.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/admin/demo/batch/start", requireAuth, adminMiddleware, async (request: AuthedRequest, response, next) => {
     try {
       const payload = batchStartSchema.parse(request.body ?? {});
       const status = await batchManager.start({
@@ -178,24 +351,25 @@ export function createApiApp(dependencies: {
     }
   });
 
-  app.get("/admin/demo/batch/status", requireAuth, (_request, response) => {
-    response.json(batchManager.getStatus());
+  app.get("/admin/demo/batch/status", requireAuth, adminMiddleware, (request: AuthedRequest, response) => {
+    response.json(batchManager.getStatus(request.user!.restaurantId));
   });
 
-  app.get("/admin/demo/report", requireAuth, async (_request, response, next) => {
+  app.get("/admin/demo/report", requireAuth, adminMiddleware, async (request: AuthedRequest, response, next) => {
     try {
-      response.json(await batchManager.getLatestReport());
+      response.json(await batchManager.getLatestReport(request.user!.restaurantId));
     } catch (error) {
       next(error);
     }
   });
 
-  app.get("/admin/demo/pipeline", requireAuth, async (_request, response, next) => {
+  app.get("/admin/demo/pipeline", requireAuth, adminMiddleware, async (request: AuthedRequest, response, next) => {
     try {
-      const latestReport = await batchManager.getLatestReport();
+      const restaurantId = request.user!.restaurantId;
+      const latestReport = await batchManager.getLatestReport(restaurantId);
       response.json(
         await dashboard.getPipelineData({
-          batchStatus: batchManager.getStatus(),
+          batchStatus: batchManager.getStatus(restaurantId),
           latestReport
         })
       );
@@ -204,11 +378,11 @@ export function createApiApp(dependencies: {
     }
   });
 
-  app.get("/admin/demo/invoice/:id", requireAuth, async (request: AuthedRequest, response, next) => {
+  app.get("/admin/demo/invoice/:id", requireAuth, adminMiddleware, async (request: AuthedRequest, response, next) => {
     try {
       const invoiceId = String(request.params.id);
       const invoice = await store.getInvoiceById(invoiceId);
-      if (!invoice) {
+      if (!invoice || invoice.restaurantId !== request.user!.restaurantId) {
         response.status(404).json({ error: "Invoice not found" });
         return;
       }
@@ -226,11 +400,12 @@ export function createApiApp(dependencies: {
     }
   });
 
-  app.get("/admin/demo/results", requireAuth, async (_request, response, next) => {
+  app.get("/admin/demo/results", requireAuth, adminMiddleware, async (_request: AuthedRequest, response, next) => {
     try {
       response.json(
         await dashboard.getResultsData({
-          latestReport: await batchManager.getLatestReport()
+          latestReport: await batchManager.getLatestReport(_request.user!.restaurantId),
+          restaurantId: _request.user!.restaurantId
         })
       );
     } catch (error) {
@@ -238,19 +413,14 @@ export function createApiApp(dependencies: {
     }
   });
 
-  app.get("/events/stream", requireAuth, (request, response) => {
-    response.setHeader("Content-Type", "text/event-stream");
-    response.setHeader("Cache-Control", "no-cache");
-    response.setHeader("Connection", "keep-alive");
-    response.flushHeaders?.();
-
-    const unsubscribe = events.subscribe(response);
-    request.on("close", unsubscribe);
-  });
-
   app.use((error: unknown, _request: express.Request, response: express.Response, _next: express.NextFunction) => {
     const message = error instanceof Error ? error.message : "Unknown error";
-    response.status(400).json({ error: message });
+    const status = error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE"
+      ? 413
+      : message.startsWith("Unsupported upload type:")
+        ? 415
+        : 400;
+    response.status(status).json({ error: message });
   });
 
   void queue.start((payload) =>

@@ -16,6 +16,7 @@ export interface InvoiceLineItemInput {
   rawName: string;
   rawQty: number;
   rawUnit: string;
+  unitPrice?: number;
 }
 
 export interface ExtractedInvoice {
@@ -92,6 +93,7 @@ export interface InventoryRecord {
 
 export interface InvoiceEventPayload {
   invoiceId: string;
+  restaurantId: string;
   status: InvoiceStatus;
   message: string;
   at: string;

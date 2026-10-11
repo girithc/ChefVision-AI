@@ -1,4 +1,4 @@
-import type { InventoryRecord, InvoiceRecord, OcrResult, Receipt, Session } from "./types";
+import type { InventoryRecord, InvoiceRecord, OcrResult, PlannedEvent, Receipt, Recipe, Session } from "./types";
 
 // Both default to same-origin prefixes that are proxied by Vite (dev) and nginx (Docker).
 const API_URL = import.meta.env.VITE_API_URL ?? "/api";
@@ -64,15 +64,51 @@ export async function uploadReceipt(token: string, receipt: Receipt) {
     invoiceDate: receipt.date,
     lineItems: receipt.items
       .filter((item) => item.name.trim() && item.qty > 0)
-      .map((item) => ({ rawName: item.name, rawQty: item.qty, rawUnit: item.unit || "each" })),
+      .map((item) => ({ rawName: item.name, rawQty: item.qty, rawUnit: item.unit || "each", unitPrice: item.unitPrice })),
   };
   const form = new FormData();
   form.append("file", new Blob([JSON.stringify(payload)], { type: "application/json" }), `${receipt.id}.json`);
+  form.append("metadata", JSON.stringify({
+    externalReceiptId: receipt.id,
+    source: receipt.source,
+    invoiceNumber: receipt.invoiceNumber,
+    tax: receipt.tax,
+    tip: receipt.tip,
+    notes: receipt.notes,
+  }));
   return request<{ invoiceId: string; status: InvoiceRecord["status"]; createdAt: string }>(
     "/invoices/upload",
     token,
     { method: "POST", body: form },
   );
+}
+
+export async function listInvoices(token: string) {
+  const body = await request<{ invoices: InvoiceRecord[] }>("/invoices", token);
+  return body.invoices;
+}
+
+export async function updateInvoice(token: string, invoiceId: string, receipt: Receipt) {
+  return request<{ ok: true }>(`/invoices/${invoiceId}`, token, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      invoiceNumber: receipt.invoiceNumber,
+      tax: receipt.tax,
+      tip: receipt.tip,
+      notes: receipt.notes,
+    }),
+  });
+}
+
+export async function deleteInvoice(token: string, invoiceId: string) {
+  const response = await fetch(`${API_URL}/invoices/${invoiceId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok && response.status !== 404) {
+    throw new ApiError(`Delete failed (${response.status})`, response.status);
+  }
 }
 
 export async function getInvoice(token: string, invoiceId: string) {
@@ -94,6 +130,40 @@ export async function waitForInvoice(token: string, invoiceId: string, timeoutMs
 export async function getInventory(token: string) {
   const body = await request<{ items: InventoryRecord[] }>("/inventory", token);
   return body.items;
+}
+
+export async function listRecipes(token: string) {
+  const body = await request<{ recipes: Recipe[] }>("/recipes", token);
+  return body.recipes;
+}
+
+export async function saveRecipe(token: string, recipe: Recipe) {
+  return request<Recipe>(`/recipes/${encodeURIComponent(recipe.id)}`, token, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(recipe),
+  });
+}
+
+export async function deleteRecipe(token: string, recipeId: string) {
+  return deleteResource(`/recipes/${encodeURIComponent(recipeId)}`, token);
+}
+
+export async function listEvents(token: string) {
+  const body = await request<{ events: PlannedEvent[] }>("/events", token);
+  return body.events;
+}
+
+export async function saveEvent(token: string, event: PlannedEvent) {
+  return request<PlannedEvent>(`/events/${encodeURIComponent(event.id)}`, token, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(event),
+  });
+}
+
+export async function deleteEvent(token: string, eventId: string) {
+  return deleteResource(`/events/${encodeURIComponent(eventId)}`, token);
 }
 
 export async function downloadInventoryExport(token: string) {
@@ -134,6 +204,16 @@ export function downloadBlob(blob: Blob, filename: string) {
   link.download = filename;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+async function deleteResource(path: string, token: string) {
+  const response = await fetch(`${API_URL}${path}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok && response.status !== 404) {
+    throw new ApiError(`Delete failed (${response.status})`, response.status);
+  }
 }
 
 export function downloadCsv(rows: Array<Array<string | number>>, filename: string) {

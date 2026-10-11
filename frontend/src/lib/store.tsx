@@ -3,12 +3,19 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 import * as api from "./api";
 import { AppContext, type AppState } from "./app-context";
 import { inventoryFromReceipts } from "./planning";
-import { sampleReceipts, seedEvents, seedRecipes } from "./seed";
-import type { InventoryRecord, PlannedEvent, Receipt, Recipe, Session } from "./types";
+import type { InventoryRecord, InvoiceRecord, PlannedEvent, Receipt, Recipe, Session } from "./types";
 
-// Demo accounts seeded by server/sql/001_init.sql
-const DEMO_ACCOUNT = { email: "admin@chefvision.test", password: "secret" };
-const DEMO_RESTAURANT_ID = "11111111-1111-1111-1111-111111111111";
+const SESSION_KEY = "chefvision.session";
+
+function readSession(): Session | null {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    return raw ? (JSON.parse(raw) as Session) : null;
+  } catch {
+    sessionStorage.removeItem(SESSION_KEY);
+    return null;
+  }
+}
 
 function readStorage<T>(key: string | null, fallback: T): T {
   if (!key) return fallback;
@@ -48,36 +55,90 @@ function upsert<T extends { id: string }>(list: T[], item: T): T[] {
   return copy;
 }
 
+function receiptFromInvoice(invoice: InvoiceRecord): Receipt {
+  return {
+    id: invoice.externalReceiptId ?? invoice.id,
+    invoiceId: invoice.id,
+    source: invoice.source,
+    supplier: invoice.supplierName ?? "",
+    date: invoice.invoiceDate ?? invoice.createdAt.slice(0, 10),
+    invoiceNumber: invoice.invoiceNumber ?? "",
+    items: invoice.lineItems.map((item) => ({
+      name: item.rawName,
+      qty: item.rawQty,
+      unit: item.rawUnit,
+      unitPrice: item.unitPrice,
+    })),
+    tax: invoice.tax,
+    tip: invoice.tip,
+    notes: invoice.notes,
+    status: invoice.status,
+    statusMessage: invoice.errorMessage ?? undefined,
+    normalized: invoice.lineItems,
+    createdAt: invoice.createdAt,
+  };
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
-  // There is no login screen: the app signs in with the demo admin account on load,
-  // falling back to offline mode when the API is unreachable.
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSession] = useState<Session | null>(readSession);
+  const [authenticating, setAuthenticating] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   const scope = session ? `chefvision.${session.restaurantId}` : null;
 
   const [receipts, setReceipts] = usePersistentState<Receipt[]>(scope && `${scope}.receipts`, []);
-  const [recipes, setRecipes] = usePersistentState<Recipe[]>(scope && `${scope}.recipes`, seedRecipes);
-  const [events, setEvents] = usePersistentState<PlannedEvent[]>(scope && `${scope}.events`, seedEvents);
+  const [recipes, setRecipes] = usePersistentState<Recipe[]>(scope && `${scope}.recipes`, []);
+  const [events, setEvents] = usePersistentState<PlannedEvent[]>(scope && `${scope}.events`, []);
   const [serverInventory, setServerInventory] = useState<InventoryRecord[]>([]);
   const [inventoryError, setInventoryError] = useState<string | null>(null);
 
-  const offline = Boolean(session && !session.token);
+  const offline = false;
   const token = session?.token ?? null;
 
-  const connect = useCallback(async () => {
+  const signIn = useCallback(async (email: string, password: string) => {
+    setAuthenticating(true);
+    setAuthError(null);
     setServerInventory([]);
     try {
-      const result = await api.login(DEMO_ACCOUNT.email, DEMO_ACCOUNT.password);
-      setSession({ token: result.token, role: result.role, restaurantId: result.restaurantId, email: DEMO_ACCOUNT.email });
-    } catch {
-      setSession({ token: null, role: "admin", restaurantId: DEMO_RESTAURANT_ID, email: DEMO_ACCOUNT.email });
+      const result = await api.login(email, password);
+      const next = { token: result.token, role: result.role, restaurantId: result.restaurantId, email };
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(next));
+      setSession(next);
+      setAuthenticating(false);
+      return true;
+    } catch (error) {
+      setSession(null);
+      setAuthError(error instanceof Error ? error.message : "Sign-in failed");
+      setAuthenticating(false);
+      return false;
     }
   }, []);
 
+  const signOut = useCallback(() => {
+    sessionStorage.removeItem(SESSION_KEY);
+    setSession(null);
+    setServerInventory([]);
+  }, []);
+
   useEffect(() => {
-    // Sign-in on mount: state is only set after the request settles.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void connect();
-  }, [connect]);
+    if (!token) return;
+    void api.listInvoices(token).then((invoices) => {
+      setReceipts(invoices.map(receiptFromInvoice));
+    }).catch((error) => {
+      setInventoryError(error instanceof Error ? error.message : "Failed to load receipt history");
+    });
+  }, [token, setReceipts]);
+
+  useEffect(() => {
+    if (!token) return;
+    void Promise.all([api.listRecipes(token), api.listEvents(token)])
+      .then(([savedRecipes, savedEvents]) => {
+        setRecipes(savedRecipes);
+        setEvents(savedEvents);
+      })
+      .catch((error) => {
+        setInventoryError(error instanceof Error ? error.message : "Failed to load planning data");
+      });
+  }, [token, setRecipes, setEvents]);
 
   const refreshInventory = useCallback(async () => {
     if (!token) return;
@@ -86,12 +147,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setInventoryError(null);
     } catch (error) {
       if (error instanceof api.ApiError && error.status === 401) {
-        void connect(); // token expired
+        signOut();
         return;
       }
       setInventoryError(error instanceof Error ? error.message : "Failed to load inventory");
     }
-  }, [token, connect]);
+  }, [token, signOut]);
 
   useEffect(() => {
     // Fetch-on-mount: state is only set after the request resolves.
@@ -143,22 +204,44 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const value: AppState = {
     session,
+    authenticating,
+    authError,
     offline,
-    reconnect: connect,
+    signIn,
+    signOut,
 
     receipts,
-    saveReceipt: (receipt) => setReceipts((list) => upsert(list, receipt)),
-    deleteReceipt: (id) => setReceipts((list) => list.filter((receipt) => receipt.id !== id)),
+    saveReceipt: (receipt) => {
+      setReceipts((list) => upsert(list, receipt));
+      if (token && receipt.invoiceId) void api.updateInvoice(token, receipt.invoiceId, receipt);
+    },
+    deleteReceipt: (id) => {
+      const receipt = receipts.find((entry) => entry.id === id);
+      setReceipts((list) => list.filter((entry) => entry.id !== id));
+      if (token && receipt?.invoiceId) {
+        void api.deleteInvoice(token, receipt.invoiceId).then(refreshInventory);
+      }
+    },
     submitReceipt,
-    loadSampleData: () => setReceipts((list) => [...sampleReceipts(), ...list]),
-
     recipes,
-    saveRecipe: (recipe) => setRecipes((list) => upsert(list, recipe)),
-    deleteRecipe: (id) => setRecipes((list) => list.filter((recipe) => recipe.id !== id)),
+    saveRecipe: (recipe) => {
+      setRecipes((list) => upsert(list, recipe));
+      if (token) void api.saveRecipe(token, recipe);
+    },
+    deleteRecipe: (id) => {
+      setRecipes((list) => list.filter((recipe) => recipe.id !== id));
+      if (token) void api.deleteRecipe(token, id);
+    },
 
     events,
-    saveEvent: (event) => setEvents((list) => upsert(list, event)),
-    deleteEvent: (id) => setEvents((list) => list.filter((event) => event.id !== id)),
+    saveEvent: (event) => {
+      setEvents((list) => upsert(list, event));
+      if (token) void api.saveEvent(token, event);
+    },
+    deleteEvent: (id) => {
+      setEvents((list) => list.filter((event) => event.id !== id));
+      if (token) void api.deleteEvent(token, id);
+    },
 
     inventory,
     inventoryError: offline ? null : inventoryError,

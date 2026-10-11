@@ -1,4 +1,4 @@
-import { ArrowRight, Boxes, CalendarDays, FileSpreadsheet, ScanLine, ShoppingCart, Sparkles, type LucideIcon } from "lucide-react";
+import { ArrowRight, Boxes, CalendarDays, Check, FileSpreadsheet, ScanLine, ShoppingCart, Sparkles, type LucideIcon } from "lucide-react";
 
 import { Logo } from "@/components/Layout";
 import { Badge } from "@/components/ui";
@@ -31,8 +31,8 @@ const workflow: Array<{ icon: LucideIcon; title: string; body: string }> = [
   },
   {
     icon: Boxes,
-    title: "Forecast (coming soon)",
-    body: "Model 3 will refine reorder quantities with short-term demand forecasts beyond scheduled events.",
+    title: "Review and export",
+    body: "Confirm normalized results, check on-hand quantities, and export the current inventory ledger for the team.",
   },
 ];
 
@@ -56,13 +56,17 @@ export function Landing() {
         </a>
       </header>
 
-      <section className="pt-10 pb-8 text-center">
+      <section className="relative pt-12 pb-10 text-center sm:pt-16">
+        <div className="pointer-events-none absolute inset-x-1/4 top-0 -z-10 h-72 rounded-full bg-emerald-300/20 blur-3xl" />
+        <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200/80 bg-white/75 px-3 py-1.5 text-[11px] font-bold tracking-wide text-emerald-700 shadow-sm backdrop-blur">
+          <Sparkles className="h-3.5 w-3.5" /> Invoice intelligence for independent restaurants
+        </span>
         <h1 className="font-display text-[2.4rem] leading-[1.12] font-bold tracking-tight text-slate-900 sm:text-[3.4rem] lg:text-[4.1rem]">
-          Photo-first inventory for
+          Turn every receipt into
           <br />
-          <span className="text-emerald-500">Smarter Restaurant Operations</span>
+          <span className="bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent">inventory you can act on</span>
         </h1>
-        <p className="mx-auto mt-5 max-w-2xl text-slate-500">
+        <p className="mx-auto mt-5 max-w-2xl text-sm leading-6 text-slate-500 sm:text-base">
           ChefVision AI turns messy invoices, inconsistent supplier names, and scattered event notes into a clean
           inventory ledger and an explainable reorder list.
         </p>
@@ -84,9 +88,16 @@ export function Landing() {
             How it works
           </a>
         </div>
+        <div className="mt-6 flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs font-medium text-slate-500">
+          {['Photo and file intake', 'Human review built in', 'Excel inventory export'].map((item) => (
+            <span key={item} className="inline-flex items-center gap-1.5">
+              <Check className="h-3.5 w-3.5 text-emerald-500" /> {item}
+            </span>
+          ))}
+        </div>
       </section>
 
-      <section className="rounded-[28px] border border-white/95 bg-white/70 p-2.5 shadow-xl shadow-emerald-500/10 backdrop-blur-2xl">
+      <section className="rounded-[28px] border border-white/95 bg-white/70 p-2.5 shadow-[0_28px_80px_-32px_rgba(16,185,129,0.45)] backdrop-blur-2xl">
         <div className="flex items-center gap-1.5 rounded-t-[22px] border-b border-slate-200/70 bg-slate-100/90 px-4 py-3">
           <span className="h-2.5 w-2.5 rounded-full bg-rose-400/90" />
           <span className="h-2.5 w-2.5 rounded-full bg-amber-400/90" />
@@ -100,7 +111,10 @@ export function Landing() {
             <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
               <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" /> Roma Farms — invoice normalized
             </div>
-            <Badge tone="green">4 line items</Badge>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-semibold tracking-wide text-slate-400 uppercase">Product preview</span>
+              <Badge tone="green">4 line items</Badge>
+            </div>
           </div>
           <table className="table-base">
             <thead>

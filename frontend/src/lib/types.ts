@@ -23,6 +23,7 @@ export interface InvoiceLineItemRecord {
   rawName: string;
   rawQty: number;
   rawUnit: string;
+  unitPrice: number;
   canonicalId: string | null;
   canonicalName: string | null;
   normalizedQty: number | null;
@@ -33,6 +34,12 @@ export interface InvoiceLineItemRecord {
 
 export interface InvoiceRecord {
   id: string;
+  externalReceiptId: string | null;
+  source: "scan" | "manual";
+  invoiceNumber: string | null;
+  tax: number;
+  tip: number;
+  notes: string;
   supplierName: string | null;
   invoiceDate: string | null;
   status: InvoiceStatus;
@@ -44,6 +51,7 @@ export interface InvoiceRecord {
 
 export interface InvoiceEventPayload {
   invoiceId: string;
+  restaurantId: string;
   status: InvoiceStatus;
   message: string;
   at: string;

@@ -1,5 +1,3 @@
-import { Loader2 } from "lucide-react";
-
 import { Layout } from "@/components/Layout";
 import { useApp } from "@/lib/app-context";
 import { matchRoute, useRoute } from "@/lib/router";
@@ -8,6 +6,7 @@ import { Dashboard } from "@/pages/Dashboard";
 import { Events } from "@/pages/Events";
 import { Inventory } from "@/pages/Inventory";
 import { Landing } from "@/pages/Landing";
+import { Login } from "@/pages/Login";
 import { ManualEntry } from "@/pages/ManualEntry";
 import { MonthlyView } from "@/pages/MonthlyView";
 import { ReceiptDetails } from "@/pages/ReceiptDetails";
@@ -49,13 +48,7 @@ export default function App() {
   const { session } = useApp();
 
   if (path === "/welcome") return <Landing />;
-  if (!session) {
-    return (
-      <div className="flex min-h-screen items-center justify-center gap-2 text-slate-500">
-        <Loader2 className="h-5 w-5 animate-spin text-brand-500" /> Connecting…
-      </div>
-    );
-  }
+  if (!session) return <Login />;
 
   return (
     <Layout path={path}>

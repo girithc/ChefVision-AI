@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { DollarSign, PenLine, Receipt as ReceiptIcon, ScanLine, Search, Trash2, TrendingUp, TriangleAlert } from "lucide-react";
+import { ArrowRight, CalendarDays, DollarSign, PenLine, Receipt as ReceiptIcon, ScanLine, Search, Sparkles, Trash2, TrendingUp, TriangleAlert, WifiOff } from "lucide-react";
 
 import { Badge, Button, Card, EmptyState, PageHeader, StatCard } from "@/components/ui";
 import { useApp } from "@/lib/app-context";
@@ -10,7 +10,7 @@ import { needsReviewCount, statusBadge } from "@/lib/receipt-status";
 
 /** Screen 1: receipts list with summary statistics, search, and quick delete. */
 export function Dashboard() {
-  const { receipts, deleteReceipt, loadSampleData } = useApp();
+  const { receipts, inventory, events, offline, deleteReceipt } = useApp();
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -44,6 +44,42 @@ export function Dashboard() {
         }
       />
 
+      <section className="relative mb-6 overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-r from-emerald-50 via-teal-50/80 to-cyan-50/60 p-5 shadow-sm sm:p-6">
+        <div className="pointer-events-none absolute -top-16 -right-10 h-44 w-44 rounded-full bg-emerald-300/25 blur-3xl" />
+        <div className="relative flex flex-col justify-between gap-5 md:flex-row md:items-center">
+          <div>
+            <span className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-500 px-2.5 py-1 text-[9px] font-bold tracking-wider text-white uppercase">
+              {offline ? <WifiOff className="h-3 w-3" /> : <Sparkles className="h-3 w-3" />}
+              {offline ? "Offline workspace" : "Operations workspace live"}
+            </span>
+            <h2 className="font-display text-lg font-bold text-slate-900 sm:text-xl">From invoice intake to event-ready ordering</h2>
+            <p className="mt-1 max-w-xl text-xs leading-5 text-slate-600">
+              Review captured receipts, keep inventory current, and turn upcoming event demand into a focused reorder list.
+            </p>
+          </div>
+          <div className="grid shrink-0 grid-cols-3 gap-2">
+            {[
+              [inventory.length, "Inventory items"],
+              [events.length, "Planned events"],
+              [reviewCount, "Need review"],
+            ].map(([value, label]) => (
+              <div key={label} className="min-w-24 rounded-2xl border border-white/80 bg-white/75 px-3 py-2.5 text-center shadow-sm backdrop-blur">
+                <div className="text-lg font-bold text-slate-900">{value}</div>
+                <div className="text-[9px] font-semibold tracking-wide text-slate-400 uppercase">{label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="relative mt-4 flex flex-wrap items-center gap-2 border-t border-emerald-100/80 pt-4 text-[11px] font-semibold text-slate-600">
+          <button type="button" onClick={() => navigate('/scan')} className="inline-flex items-center gap-1.5 rounded-lg bg-white/80 px-3 py-2 hover:bg-white">
+            <ScanLine className="h-3.5 w-3.5 text-emerald-600" /> Capture receipt <ArrowRight className="h-3 w-3 text-slate-400" />
+          </button>
+          <button type="button" onClick={() => navigate('/events')} className="inline-flex items-center gap-1.5 rounded-lg bg-white/80 px-3 py-2 hover:bg-white">
+            <CalendarDays className="h-3.5 w-3.5 text-emerald-600" /> Plan an event <ArrowRight className="h-3 w-3 text-slate-400" />
+          </button>
+        </div>
+      </section>
+
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard label="Total receipts" value={receipts.length} icon={ReceiptIcon} tone="indigo" />
         <StatCard label="Total spent" value={currency.format(totalSpent)} icon={DollarSign} />
@@ -76,9 +112,6 @@ export function Dashboard() {
               <div className="flex gap-2">
                 <Button icon={ScanLine} onClick={() => navigate("/scan")}>
                   Scan receipt
-                </Button>
-                <Button variant="secondary" onClick={loadSampleData}>
-                  Load sample data
                 </Button>
               </div>
             }
