@@ -74,14 +74,14 @@ npm run dev:normalizer
 npm run dev:api
 ```
 
-Environment defaults are baked into both services, but these values are useful to set explicitly:
+Copy `.env.example` and set the environment explicitly. The API will not start without a strong JWT secret:
 
 ```bash
 PORT=4000
 DATABASE_URL=postgresql://user:password@ep-xxx-pooler.region.aws.neon.tech/neondb
 DATABASE_SSL=require
 REDIS_URL=redis://localhost:6379
-JWT_SECRET=chefvision-dev-secret
+JWT_SECRET=replace-with-at-least-32-random-characters
 NORMALIZER_URL=http://localhost:4001
 EMBEDDING_PROVIDER=minilm
 EMBEDDING_MODEL_ID=onnx-community/all-MiniLM-L6-v2-ONNX
@@ -101,19 +101,15 @@ npm run ml:backfill:embeddings
 
 ## Docker stack
 
-Prerequisite: a [Neon](https://neon.tech) Postgres project (pgvector is supported out of the box).
-
 ```bash
 cp infra/.env.example infra/.env
-# paste your Neon connection string (pooled, -pooler host) into infra/.env
-
-# apply the schema (use the direct, non-pooler host for DDL):
-docker run --rm -i postgres:16-alpine psql "$DATABASE_URL" -f sql/001_init.sql
-docker run --rm -i postgres:16-alpine psql "$DATABASE_URL" -f sql/003_invoice_file_storage.sql
-# (002 only needed on databases created with the old 16-dim vector schema)
+# replace JWT_SECRET in infra/.env
 
 docker compose -f infra/docker-compose.yml up --build
 ```
+
+The stack includes local pgvector/PostgreSQL and applies `sql/*.sql` exactly once through the migration service.
+Set `DATABASE_URL` and `DATABASE_SSL=require` in `infra/.env` to use Neon instead.
 
 Services:
 
@@ -130,8 +126,10 @@ There is also an Azure CLI deployment path in [infra/azure/README.md](infra/azur
 
 ## Demo login
 
-- Owner: `owner@chefvision.test` / `secret`
-- Admin: `admin@chefvision.test` / `secret`
+- Owner: `owner@chefvision.test` / `ChefVisionDemo!2026`
+- Admin: `admin@chefvision.test` / `ChefVisionDemo!2026`
+
+These are development-only users whose password is stored as a scrypt hash. Replace them for shared deployments.
 
 ## Demo upload format
 

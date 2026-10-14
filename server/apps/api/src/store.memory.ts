@@ -1,6 +1,6 @@
 import type { InventoryRecord } from "@chefvision/shared";
 
-import type { InvoiceLineItemRecord, InvoiceRecord, InvoiceStore, UserRecord } from "./store.js";
+import type { InvoiceLineItemRecord, InvoiceRecord, InvoiceStore, PlannedEventRecord, RecipeRecord, UserRecord } from "./store.js";
 
 export class MemoryInvoiceStore implements InvoiceStore {
   private readonly users = new Map<string, UserRecord>();
@@ -10,6 +10,10 @@ export class MemoryInvoiceStore implements InvoiceStore {
   private readonly invoiceLineItems = new Map<string, InvoiceLineItemRecord[]>();
 
   private readonly inventory = new Map<string, InventoryRecord[]>();
+
+  private readonly recipes = new Map<string, RecipeRecord[]>();
+
+  private readonly plannedEvents = new Map<string, PlannedEventRecord[]>();
 
   constructor(users: UserRecord[] = []) {
     users.forEach((user) => this.users.set(user.email, user));
@@ -25,9 +29,25 @@ export class MemoryInvoiceStore implements InvoiceStore {
     storageKey: string;
     originalFilename: string;
     mimeType: string;
+    externalReceiptId?: string | null;
+    source?: "scan" | "manual";
+    invoiceNumber?: string | null;
+    tax?: number;
+    tip?: number;
+    notes?: string;
   }): Promise<InvoiceRecord> {
     const invoice: InvoiceRecord = {
-      ...input,
+      id: input.id,
+      restaurantId: input.restaurantId,
+      storageKey: input.storageKey,
+      originalFilename: input.originalFilename,
+      mimeType: input.mimeType,
+      externalReceiptId: input.externalReceiptId ?? null,
+      source: input.source ?? "scan",
+      invoiceNumber: input.invoiceNumber ?? null,
+      tax: input.tax ?? 0,
+      tip: input.tip ?? 0,
+      notes: input.notes ?? "",
       supplierName: null,
       invoiceDate: null,
       status: "pending",
@@ -42,6 +62,44 @@ export class MemoryInvoiceStore implements InvoiceStore {
 
   async getInvoiceById(invoiceId: string): Promise<InvoiceRecord | null> {
     return this.invoices.get(invoiceId) ?? null;
+  }
+
+  async listInvoices(restaurantId: string): Promise<InvoiceRecord[]> {
+    return [...this.invoices.values()]
+      .filter((invoice) => invoice.restaurantId === restaurantId)
+      .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+  }
+
+  async updateInvoiceMetadata(input: {
+    invoiceId: string;
+    restaurantId: string;
+    invoiceNumber: string;
+    tax: number;
+    tip: number;
+    notes: string;
+  }): Promise<boolean> {
+    const invoice = this.invoices.get(input.invoiceId);
+    if (!invoice || invoice.restaurantId !== input.restaurantId) return false;
+    invoice.invoiceNumber = input.invoiceNumber;
+    invoice.tax = input.tax;
+    invoice.tip = input.tip;
+    invoice.notes = input.notes;
+    invoice.updatedAt = new Date().toISOString();
+    return true;
+  }
+
+  async deleteInvoice(invoiceId: string, restaurantId: string): Promise<boolean> {
+    const invoice = this.invoices.get(invoiceId);
+    if (!invoice || invoice.restaurantId !== restaurantId) return false;
+    const inventory = this.inventory.get(restaurantId) ?? [];
+    for (const item of this.invoiceLineItems.get(invoiceId) ?? []) {
+      if (item.routing !== "auto_commit" || !item.canonicalId || item.normalizedQty === null) continue;
+      const record = inventory.find((entry) => entry.canonicalId === item.canonicalId);
+      if (record) record.onHandQty = Math.max(0, record.onHandQty - item.normalizedQty);
+    }
+    this.invoices.delete(invoiceId);
+    this.invoiceLineItems.delete(invoiceId);
+    return true;
   }
 
   async setInvoiceStatus(invoiceId: string, status: InvoiceRecord["status"], errorMessage?: string | null): Promise<void> {
@@ -66,7 +124,7 @@ export class MemoryInvoiceStore implements InvoiceStore {
 
   async replaceLineItems(
     invoiceId: string,
-    items: Array<{ rawName: string; rawQty: number; rawUnit: string }>
+    items: Array<{ rawName: string; rawQty: number; rawUnit: string; unitPrice?: number }>
   ): Promise<InvoiceLineItemRecord[]> {
     const inserted = items.map((item, index) => ({
       id: `${invoiceId}-line-${index + 1}`,
@@ -74,6 +132,7 @@ export class MemoryInvoiceStore implements InvoiceStore {
       rawName: item.rawName,
       rawQty: item.rawQty,
       rawUnit: item.rawUnit,
+      unitPrice: item.unitPrice ?? 0,
       canonicalId: null,
       canonicalName: null,
       normalizedQty: null,
@@ -139,5 +198,48 @@ export class MemoryInvoiceStore implements InvoiceStore {
 
   async listLineItems(invoiceId: string): Promise<InvoiceLineItemRecord[]> {
     return [...(this.invoiceLineItems.get(invoiceId) ?? [])];
+  }
+
+  async listRecipes(restaurantId: string): Promise<RecipeRecord[]> {
+    return structuredClone(this.recipes.get(restaurantId) ?? []);
+  }
+
+  async upsertRecipe(restaurantId: string, recipe: RecipeRecord): Promise<void> {
+    const current = this.recipes.get(restaurantId) ?? [];
+    const next = current.filter((item) => item.id !== recipe.id);
+    next.push(structuredClone(recipe));
+    this.recipes.set(restaurantId, next);
+  }
+
+  async deleteRecipe(restaurantId: string, recipeId: string): Promise<boolean> {
+    const current = this.recipes.get(restaurantId) ?? [];
+    if (!current.some((recipe) => recipe.id === recipeId)) return false;
+    this.recipes.set(restaurantId, current.filter((recipe) => recipe.id !== recipeId));
+    this.plannedEvents.set(
+      restaurantId,
+      (this.plannedEvents.get(restaurantId) ?? []).map((event) => ({
+        ...event,
+        recipes: event.recipes.filter((recipe) => recipe.recipeId !== recipeId)
+      }))
+    );
+    return true;
+  }
+
+  async listEvents(restaurantId: string): Promise<PlannedEventRecord[]> {
+    return structuredClone(this.plannedEvents.get(restaurantId) ?? []);
+  }
+
+  async upsertEvent(restaurantId: string, event: PlannedEventRecord): Promise<void> {
+    const current = this.plannedEvents.get(restaurantId) ?? [];
+    const next = current.filter((item) => item.id !== event.id);
+    next.push(structuredClone(event));
+    this.plannedEvents.set(restaurantId, next);
+  }
+
+  async deleteEvent(restaurantId: string, eventId: string): Promise<boolean> {
+    const current = this.plannedEvents.get(restaurantId) ?? [];
+    if (!current.some((event) => event.id === eventId)) return false;
+    this.plannedEvents.set(restaurantId, current.filter((event) => event.id !== eventId));
+    return true;
   }
 }

@@ -87,8 +87,8 @@ on conflict (id) do nothing;
 
 insert into app_user (id, restaurant_id, email, password_hash, role)
 values
-  ('22222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111', 'owner@chefvision.test', 'secret', 'owner'),
-  ('33333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111111', 'admin@chefvision.test', 'secret', 'admin')
+  ('22222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111', 'owner@chefvision.test', 'scrypt$c4cbb07071873ce0d8840c8963d5107a$9a828f092f9514c524b14981c3c94d5d2b96a5686f2a99815585948dcdaaaa3fb58f3edbcda1f3fb30edcc1cd99dc18bbf9deeb8a945bef83d7b4b69615a760f', 'owner'),
+  ('33333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111111', 'admin@chefvision.test', 'scrypt$c4cbb07071873ce0d8840c8963d5107a$9a828f092f9514c524b14981c3c94d5d2b96a5686f2a99815585948dcdaaaa3fb58f3edbcda1f3fb30edcc1cd99dc18bbf9deeb8a945bef83d7b4b69615a760f', 'admin')
 on conflict (email) do nothing;
 
 insert into ingredient_canonical (id, canonical_name, default_unit, embedding, is_active)

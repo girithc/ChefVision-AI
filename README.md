@@ -9,6 +9,58 @@ ChefVision AI fixes this by using computer vision and machine learning to read i
 
 ---
 
+## Complete MVP quick start
+
+The supported application is the existing React/Vite frontend, Express API, TypeScript normalization service,
+FastAPI OCR service, PostgreSQL database, and Redis worker. The `product` branch is a visual reference only; the
+MVP does not use Next.js and does not expose unfinished Supplier CRM, Agent Builder, Purchase Orders, or Analytics
+features.
+
+### Run the complete stack with Docker
+
+Requirements: Docker Desktop (or Docker Engine with Compose v2) and at least 4 GB of free memory for the OCR and
+embedding services.
+
+```bash
+cp server/infra/.env.example server/infra/.env
+```
+
+Edit `server/infra/.env` and replace `JWT_SECRET` with a random value of at least 32 characters. Then run:
+
+```bash
+docker compose -f server/infra/docker-compose.yml up --build
+```
+
+Compose starts local pgvector/PostgreSQL, runs every unapplied migration in order, and then starts Redis, the API,
+normalizer, OCR service, and frontend. Open [http://localhost:5173](http://localhost:5173).
+
+Development-only seeded accounts (both use password `ChefVisionDemo!2026`):
+
+- Owner: `owner@chefvision.test`
+- Admin: `admin@chefvision.test`
+
+The password is stored as a scrypt hash in PostgreSQL. Change or remove these accounts before any shared deployment.
+JWT signing refuses to start without a secret of at least 32 characters.
+
+To use Neon instead of the local database, set `DATABASE_URL` to the Neon connection string and
+`DATABASE_SSL=require` in `server/infra/.env`. Do not commit that file.
+
+### Verify the repository
+
+```bash
+cd frontend && npm ci && npm run lint && npm test && npm run build
+cd ../server && npm ci && npm run build && npm test
+cd ../Ocr-Model-1 && python3 -m unittest discover -p 'test_*.py' && python3 -m py_compile app.py ocr_invoice.py upload_policy.py
+cd .. && JWT_SECRET=compose-validation-secret-at-least-32-chars docker compose -f server/infra/docker-compose.yml config --quiet
+```
+
+The main workflow is: sign in → scan an invoice image → review OCR fields → submit for normalization → view receipt
+history and inventory → create recipes and events → check shortages → export the reorder CSV or inventory workbook.
+Receipts, metadata, recipes, events, and inventory are tenant-scoped and persisted in PostgreSQL, so they survive
+browser refreshes and container restarts (the local database uses the `postgres-data` Docker volume).
+
+---
+
 ## What We Do
 
 * Intelligent inventory management and reorder recommendations
@@ -31,6 +83,50 @@ ChefVision AI fixes this by using computer vision and machine learning to read i
    After normalization, the cleaned data is written into an Excel sheet (or a spreadsheet-backed database with Excel export).
 5. **Plan for events + smart reordering**
    The owner enters upcoming events (e.g., *10 events*), selects the recipes/menu items needed, and specifies serving counts (e.g., *100 people*). The app calculates total ingredient requirements per event (or week-by-week), checks current inventory, and produces a **smart reorder list** for shortages.
+
+---
+
+## Screenshots
+
+### Dashboard
+All scanned and entered receipts, with spend totals and items needing review.
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+### Scan Receipt
+Upload or photograph a delivery invoice; Model 1 extracts the line items.
+
+![Scan Receipt](docs/screenshots/scan-receipt.png)
+
+### Manual Entry
+Enter supplier, date, invoice number, and line items by hand.
+
+![Manual Entry](docs/screenshots/manual-entry.png)
+
+### Events
+Catering orders and events that drive ingredient requirements.
+
+![Events](docs/screenshots/events.png)
+
+### Recipes
+Per-serving ingredient lists, scaled by each event's serving count.
+
+![Recipes](docs/screenshots/recipes.png)
+
+### Monthly View
+Calendar of the month's events and the combined ingredients they need, week by week.
+
+![Monthly View](docs/screenshots/monthly-view.png)
+
+### Inventory
+Current on-hand quantities computed from saved receipts, with CSV export.
+
+![Inventory](docs/screenshots/inventory.png)
+
+### Check & Reorder
+Planned-event requirements compared against inventory, with shortages and a reorder list.
+
+![Check & Reorder](docs/screenshots/check-reorder.png)
 
 ---
 
@@ -118,14 +214,11 @@ ChefVision AI is easy to onboard but powerful over time. A restaurant can start 
 
 ---
 
-## Status
+## MVP status
 
-Early-stage productization focused on:
-
-* Reliable ingestion (photo → structured data)
-* High-accuracy ingredient normalization
-* Event-based inventory checking and reorder generation
-* Improving forecasting performance as historical usage data grows
+The integration branch provides the complete receipt-to-reorder MVP: authenticated tenant workspaces, OCR review,
+ingredient normalization, persisted receipt history, inventory, recipes, events, monthly planning, reorder guidance,
+Excel/CSV export, admin-only diagnostics, automated tests, and GitHub Actions CI.
 
 ---
 

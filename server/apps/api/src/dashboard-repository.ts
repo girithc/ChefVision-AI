@@ -61,7 +61,7 @@ export class DashboardRepository {
     };
   }
 
-  async getResultsData(input: { latestReport: LiveBatchReport | null }) {
+  async getResultsData(input: { latestReport: LiveBatchReport | null; restaurantId: string }) {
     const [
       invoiceStatuses,
       routingBreakdown,
@@ -76,17 +76,22 @@ export class DashboardRepository {
         `
           select status, count(*)::int as count
           from invoice
+          where restaurant_id = $1
           group by status
           order by status asc
-        `
+        `,
+        [input.restaurantId]
       ),
       this.pool.query<{ routing: string; count: number }>(
         `
           select coalesce(routing, 'unrouted') as routing, count(*)::int as count
-          from invoice_line_item
-          group by coalesce(routing, 'unrouted')
+          from invoice_line_item li
+          join invoice i on i.id = li.invoice_id
+          where i.restaurant_id = $1
+          group by coalesce(li.routing, 'unrouted')
           order by count desc, routing asc
-        `
+        `,
+        [input.restaurantId]
       ),
       this.pool.query<{ canonicalName: string; onHandQty: number; unit: string }>(
         `
@@ -95,21 +100,25 @@ export class DashboardRepository {
             on_hand_qty::float8 as "onHandQty",
             unit
           from inventory_ledger
+          where restaurant_id = $1
           order by on_hand_qty desc, canonical_name asc
           limit 12
-        `
+        `,
+        [input.restaurantId]
       ),
       this.pool.query<{ canonicalName: string; matchCount: number }>(
         `
           select
             canonical_name as "canonicalName",
             count(*)::int as "matchCount"
-          from invoice_line_item
-          where canonical_name is not null
-          group by canonical_name
-          order by count(*) desc, canonical_name asc
+          from invoice_line_item li
+          join invoice i on i.id = li.invoice_id
+          where li.canonical_name is not null and i.restaurant_id = $1
+          group by li.canonical_name
+          order by count(*) desc, li.canonical_name asc
           limit 12
-        `
+        `,
+        [input.restaurantId]
       ),
       this.pool.query<{
         id: string;
@@ -128,9 +137,11 @@ export class DashboardRepository {
             created_at as "createdAt",
             updated_at as "updatedAt"
           from invoice
+          where restaurant_id = $1
           order by created_at desc
           limit 12
-        `
+        `,
+        [input.restaurantId]
       ),
       this.pool.query<{
         invoiceId: string;
@@ -148,9 +159,11 @@ export class DashboardRepository {
             li.confidence::float8 as confidence
           from invoice_line_item li
           join invoice i on i.id = li.invoice_id
+          where i.restaurant_id = $1
           order by i.updated_at desc, li.raw_name asc
           limit 20
-        `
+        `,
+        [input.restaurantId]
       ),
       this.pool.query<{
         invoiceCount: number;
@@ -160,11 +173,12 @@ export class DashboardRepository {
       }>(
         `
           select
-            (select count(*)::int from invoice) as "invoiceCount",
-            (select count(*)::int from invoice_line_item) as "lineItemCount",
-            (select count(*)::int from invoice_line_item where canonical_name is not null) as "matchedLineItemCount",
-            (select count(*)::int from inventory_ledger) as "inventoryItemCount"
-        `
+            (select count(*)::int from invoice where restaurant_id = $1) as "invoiceCount",
+            (select count(*)::int from invoice_line_item li join invoice i on i.id = li.invoice_id where i.restaurant_id = $1) as "lineItemCount",
+            (select count(*)::int from invoice_line_item li join invoice i on i.id = li.invoice_id where i.restaurant_id = $1 and li.canonical_name is not null) as "matchedLineItemCount",
+            (select count(*)::int from inventory_ledger where restaurant_id = $1) as "inventoryItemCount"
+        `,
+        [input.restaurantId]
       ),
       input.latestReport ? Promise.resolve(input.latestReport) : this.readReportFile()
     ]);

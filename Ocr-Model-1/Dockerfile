@@ -9,7 +9,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app.py ocr_invoice.py ./
+COPY app.py ocr_invoice.py upload_policy.py ./
 COPY static ./static
 
 EXPOSE 8000

@@ -22,6 +22,7 @@ export async function processInvoiceJob(
     await store.setInvoiceStatus(invoiceId, "processing");
     events.publish({
       invoiceId,
+      restaurantId: invoice.restaurantId,
       status: "processing",
       message: "Invoice job started",
       at: new Date().toISOString()
@@ -64,6 +65,7 @@ export async function processInvoiceJob(
     await store.setInvoiceStatus(invoiceId, "done");
     events.publish({
       invoiceId,
+      restaurantId: invoice.restaurantId,
       status: "done",
       message: "Invoice processed successfully",
       at: new Date().toISOString()
@@ -73,6 +75,7 @@ export async function processInvoiceJob(
     await store.setInvoiceStatus(invoiceId, "error", message);
     events.publish({
       invoiceId,
+      restaurantId: invoice.restaurantId,
       status: "error",
       message,
       at: new Date().toISOString()
