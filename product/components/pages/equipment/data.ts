@@ -6,6 +6,19 @@ export type Priority = "Low" | "Medium" | "High" | "Urgent";
 
 export type SensorState = "Normal" | "Warning" | "Alert";
 
+export type SensorLog = { time: string; value: number };
+
+export type SensorReading = {
+  metric: string;
+  reading: string;
+  target: string;
+  state: SensorState;
+  updatedAt: string;
+  unit: string;
+  /** Readings over the last several hours, chronological. */
+  logs: SensorLog[];
+};
+
 export type ServiceRecord = {
   id: string;
   date: string; // ISO yyyy-mm-dd
@@ -26,7 +39,7 @@ export type Asset = {
   status: AssetStatus;
   warranty: { provider: string; expires: string; coverage: string };
   contract?: { vendor: string; cadence: string; nextVisit: string; costPerYear: string };
-  sensor?: { metric: string; reading: string; target: string; state: SensorState; updatedAt: string };
+  sensor?: SensorReading;
   preventive: { task: string; cadence: string; lastDone: string; nextDue: string }[];
   history: ServiceRecord[];
   breakdowns12mo: number;
@@ -63,7 +76,13 @@ export const assets: Asset[] = [
     status: "Operational",
     warranty: { provider: "ColdLine", expires: "Mar 2026", coverage: "Parts + compressor" },
     contract: { vendor: "ColdFix Ltd", cadence: "Quarterly service", nextVisit: "2025-11-04", costPerYear: "$960/yr" },
-    sensor: { metric: "Chiller temp", reading: "37.2°F", target: "35–38°F", state: "Normal", updatedAt: "Today 9:02 AM" },
+    sensor: {
+      metric: "Chiller temp", reading: "37.2°F", target: "35–38°F", state: "Normal", updatedAt: "Today 9:02 AM", unit: "°F",
+      logs: [
+        { time: "6:02 AM", value: 36.8 }, { time: "6:32 AM", value: 37.1 }, { time: "7:02 AM", value: 36.9 },
+        { time: "7:32 AM", value: 37.0 }, { time: "8:02 AM", value: 37.4 }, { time: "9:02 AM", value: 37.2 },
+      ],
+    },
     preventive: [
       { task: "Condenser coil cleaning", cadence: "Monthly", lastDone: "2025-09-28", nextDue: "2025-10-28" },
       { task: "Gasket inspection", cadence: "Quarterly", lastDone: "2025-08-11", nextDue: "2025-11-04" },
@@ -85,7 +104,13 @@ export const assets: Asset[] = [
     status: "Operational",
     warranty: { provider: "ColdLine", expires: "Mar 2026", coverage: "Parts + compressor" },
     contract: { vendor: "ColdFix Ltd", cadence: "Quarterly service", nextVisit: "2025-11-04", costPerYear: "$540/yr" },
-    sensor: { metric: "Freezer temp", reading: "-3.1°F", target: "0°F or below", state: "Normal", updatedAt: "Today 9:02 AM" },
+    sensor: {
+      metric: "Freezer temp", reading: "-3.1°F", target: "0°F or below", state: "Normal", updatedAt: "Today 9:02 AM", unit: "°F",
+      logs: [
+        { time: "6:02 AM", value: -2.8 }, { time: "7:02 AM", value: -3.0 }, { time: "8:02 AM", value: -3.2 },
+        { time: "9:02 AM", value: -3.1 },
+      ],
+    },
     preventive: [
       { task: "Coil cleaning + defrost check", cadence: "Monthly", lastDone: "2025-09-28", nextDue: "2025-10-28" },
     ],
@@ -148,7 +173,13 @@ export const assets: Asset[] = [
     status: "Operational",
     warranty: { provider: "Hobart", expires: "Feb 2027", coverage: "Parts + labor" },
     contract: { vendor: "Hobart Care", cadence: "Quarterly service", nextVisit: "2025-10-21", costPerYear: "$1,140/yr" },
-    sensor: { metric: "Wash temp", reading: "141°F", target: "140–150°F", state: "Normal", updatedAt: "Today 8:47 AM" },
+    sensor: {
+      metric: "Wash temp", reading: "141°F", target: "140–150°F", state: "Normal", updatedAt: "Today 8:47 AM", unit: "°F",
+      logs: [
+        { time: "6:47 AM", value: 142 }, { time: "7:17 AM", value: 140 }, { time: "7:47 AM", value: 141 },
+        { time: "8:17 AM", value: 143 }, { time: "8:47 AM", value: 141 },
+      ],
+    },
     preventive: [
       { task: "Descale + rinse arm check", cadence: "Monthly", lastDone: "2025-09-20", nextDue: "2025-10-20" },
     ],
@@ -184,7 +215,13 @@ export const assets: Asset[] = [
     purchasedAt: "Jul 2019",
     status: "Operational",
     warranty: { provider: "Hoshizaki", expires: "Expired Jul 2022", coverage: "—" },
-    sensor: { metric: "Water temp", reading: "44°F", target: "36–40°F", state: "Alert", updatedAt: "Today 7:55 AM" },
+    sensor: {
+      metric: "Water temp", reading: "44°F", target: "36–40°F", state: "Alert", updatedAt: "Today 7:55 AM", unit: "°F",
+      logs: [
+        { time: "5:55 AM", value: 40.2 }, { time: "6:25 AM", value: 41.0 }, { time: "6:55 AM", value: 42.4 },
+        { time: "7:25 AM", value: 43.3 }, { time: "7:55 AM", value: 44.0 },
+      ],
+    },
     preventive: [
       { task: "Sanitize + filter change", cadence: "Monthly", lastDone: "2025-09-15", nextDue: "2025-10-15" },
     ],
@@ -206,7 +243,13 @@ export const assets: Asset[] = [
     status: "Operational",
     warranty: { provider: "Trane", expires: "Expired May 2023", coverage: "—" },
     contract: { vendor: "AirFlow Systems", cadence: "Annual service", nextVisit: "2026-03-15", costPerYear: "$620/yr" },
-    sensor: { metric: "Return air temp", reading: "76°F", target: "70–74°F", state: "Warning", updatedAt: "Today 9:02 AM" },
+    sensor: {
+      metric: "Return air temp", reading: "76°F", target: "70–74°F", state: "Warning", updatedAt: "Today 9:02 AM", unit: "°F",
+      logs: [
+        { time: "6:02 AM", value: 73.0 }, { time: "7:02 AM", value: 74.2 }, { time: "8:02 AM", value: 75.1 },
+        { time: "9:02 AM", value: 76.0 },
+      ],
+    },
     preventive: [
       { task: "Filter replacement", cadence: "Quarterly", lastDone: "2025-09-30", nextDue: "2025-12-30" },
     ],

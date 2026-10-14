@@ -21,6 +21,7 @@ import {
   X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { searchPages, type PageEntry } from "../lib/page-registry";
 import OverviewPage from "./pages/overview/OverviewPage";
 import ChecklistsPage from "./pages/checklists/ChecklistsPage";
 import AgentsPage from "./pages/agents/AgentsPage";
@@ -52,7 +53,7 @@ const navItems: Array<{ id: NavId; label: string; icon: LucideIcon }> = [
   { id: "inventory", label: "Inventory", icon: Boxes },
   { id: "recipes", label: "Recipes & Costs", icon: ChefHat },
   { id: "finance", label: "Financial Reports", icon: FileChartColumn },
-  { id: "builder", label: "Traces", icon: Workflow },
+  { id: "builder", label: "Traces & Uptime", icon: Workflow },
   { id: "data", label: "Data", icon: Database },
   { id: "users", label: "Users & Permissions", icon: Users },
 ];
@@ -91,7 +92,10 @@ export default function AppWorkspace() {
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [messages, setMessages] = useState<AssistantMessage[]>([assistantGreeting]);
   const [assistantInput, setAssistantInput] = useState("");
+  const [pageQuery, setPageQuery] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const pageResults: PageEntry[] = searchPages(pageQuery).slice(0, 8);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -170,13 +174,15 @@ export default function AppWorkspace() {
           </nav>
         </div>
 
-        <div className={`flex h-14 shrink-0 flex-col justify-center border-t border-slate-100 text-[11px] ${sidebarCollapsed ? "px-4" : "px-6"}`}>
-          <div className={`items-center gap-1.5 font-medium text-emerald-700 ${sidebarCollapsed ? "flex justify-center" : "flex"}`}>
-            <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-emerald-500" />
-            {!sidebarCollapsed && "Document AI online"}
-          </div>
+        <div className={`flex h-14 shrink-0 items-center border-t border-slate-100 ${sidebarCollapsed ? "justify-center px-4" : "gap-3 px-6"}`}>
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-700">
+            MC
+          </span>
           {!sidebarCollapsed && (
-            <div className="mt-1 text-slate-400">Last sync 2 minutes ago</div>
+            <div className="min-w-0">
+              <div className="truncate text-xs font-bold text-slate-900">Marianne Cole</div>
+              <div className="truncate text-[10px] text-slate-400">Owner / Admin</div>
+            </div>
           )}
         </div>
       </aside>
@@ -188,9 +194,38 @@ export default function AppWorkspace() {
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               type="search"
-              placeholder="Search suppliers, invoices, inventory..."
+              placeholder="Search pages, tools, reports…"
+              value={pageQuery}
+              onChange={(event) => setPageQuery(event.target.value)}
               className="w-full rounded-xl bg-slate-100 py-2 pl-9 pr-4 text-xs text-slate-700 outline-none ring-0 focus:outline-none focus:ring-0"
             />
+            {pageQuery.trim() !== "" && (
+              <div className="absolute left-0 right-0 top-full z-30 mt-1.5 overflow-hidden rounded-xl border border-slate-100 bg-white shadow-lg">
+                {pageResults.length === 0 ? (
+                  <p className="px-4 py-3 text-[11px] text-slate-400">No pages match “{pageQuery}”.</p>
+                ) : (
+                  pageResults.map((entry) => (
+                    <button
+                      key={entry.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveNav(entry.parent);
+                        setPageQuery("");
+                      }}
+                      className="flex w-full items-start justify-between gap-3 px-4 py-2.5 text-left transition-colors hover:bg-slate-50"
+                    >
+                      <div className="min-w-0">
+                        <div className="truncate text-xs font-semibold text-slate-900">{entry.name}</div>
+                        <div className="mt-0.5 truncate text-[10px] text-slate-500">{entry.description}</div>
+                      </div>
+                      <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-slate-500">
+                        {entry.parentLabel}
+                      </span>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
             </div>
           </div>
           <div className="flex items-center gap-2">

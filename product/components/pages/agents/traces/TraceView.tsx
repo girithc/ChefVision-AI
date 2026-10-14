@@ -42,7 +42,7 @@ function TraceRow({
   const duration = step.endMs - step.startMs;
 
   return (
-    <>
+    <div>
       <div
         className="flex items-center gap-2.5 px-4 py-2.5 text-[11px]"
         style={{ paddingLeft: `${16 + depth * 22}px` }}
@@ -69,10 +69,18 @@ function TraceRow({
           <CircleX className="h-3.5 w-3.5 shrink-0 text-rose-500" />
         )}
       </div>
+      {step.detail && (
+        <div
+          className="-mt-1 pb-2 text-[10px] leading-relaxed text-slate-400"
+          style={{ paddingLeft: `${62 + depth * 22}px` }}
+        >
+          {step.detail}
+        </div>
+      )}
       {step.children?.map((child) => (
         <TraceRow key={child.id} step={child} depth={depth + 1} totalMs={totalMs} />
       ))}
-    </>
+    </div>
   );
 }
 
@@ -87,10 +95,14 @@ export default function TraceView({ steps, name }: { steps: TraceStep[]; name: s
         <div className="text-[11px] font-bold text-slate-800">Trace — {name}</div>
         <div className="flex items-center gap-2 text-[10px] text-slate-400">
           <span>{(totalMs / 1000).toFixed(2)}s total</span>
-          <span>·</span>
-          <span>{tokens.toLocaleString()} tokens</span>
-          <span>·</span>
-          <span>~${((tokens / 1000) * 0.004).toFixed(4)} est.</span>
+          {tokens > 0 && (
+            <>
+              <span>·</span>
+              <span>{tokens.toLocaleString()} tokens</span>
+              <span>·</span>
+              <span>~${((tokens / 1000) * 0.004).toFixed(4)} est.</span>
+            </>
+          )}
           <StatusBadge label={hasError ? "Error" : "Success"} tone={hasError ? "rose" : "emerald"} />
         </div>
       </div>
@@ -98,9 +110,6 @@ export default function TraceView({ steps, name }: { steps: TraceStep[]; name: s
         {steps.map((step) => (
           <TraceRow key={step.id} step={step} depth={0} totalMs={totalMs} />
         ))}
-      </div>
-      <div className="border-t border-slate-100 px-4 py-2 text-[9px] text-slate-400">
-        Waterfall bars show each span's share of the total run time — nested spans are indented under their parent.
       </div>
     </div>
   );

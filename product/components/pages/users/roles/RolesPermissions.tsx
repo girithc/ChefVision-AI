@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { KeyRound, Lock, Plus } from "lucide-react";
+import { KeyRound, Plus } from "lucide-react";
 import { permissionGroups, type Role } from "../data";
 
 type RolesPermissionsProps = {
@@ -95,12 +95,6 @@ export default function RolesPermissions({
               <div>
                 <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
                   {selectedRole.name}
-                  {selectedRole.system && (
-                    <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-slate-500">
-                      <Lock className="h-2.5 w-2.5" />
-                      System
-                    </span>
-                  )}
                 </div>
                 <p className="mt-0.5 text-[11px] text-slate-500">{selectedRole.description}</p>
               </div>

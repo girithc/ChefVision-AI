@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles } from "lucide-react";
 import { PageHeader } from "../../shared/ui";
 import { recipes } from "./data";
 import RecipeList from "./recipes/RecipeList";
@@ -54,15 +53,6 @@ export default function RecipesPage() {
           </div>
         }
       />
-
-      <div className="flex items-start gap-2 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3">
-        <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-violet-600" />
-        <span className="text-xs leading-relaxed text-violet-900">
-          <strong className="font-semibold">AI-assisted costing:</strong> ingredient costs auto-update from published
-          invoices — 2 recipes re-costed this week (Chicken Breast +8%). AI matched 4 supplier items to this catalog;
-          1 pending confirmation in Invoices & Purchases.
-        </span>
-      </div>
 
       {tab === "recipes" && (
         <div className="space-y-5">

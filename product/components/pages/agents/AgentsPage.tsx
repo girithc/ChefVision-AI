@@ -5,6 +5,7 @@ import { ChevronDown } from "lucide-react";
 import { StatusBadge } from "../../shared/ui";
 import { workflowTraces } from "./traces/traceData";
 import TraceView from "./traces/TraceView";
+import UptimeBoard from "./uptime/UptimeBoard";
 
 type Workflow = {
   id: string;
@@ -13,10 +14,14 @@ type Workflow = {
   status: string;
 };
 
+type PageView = "traces" | "uptime";
+
 const initialWorkflows: Workflow[] = [
-  { id: "invoice-intake", name: "Invoice intake agent", detail: "Reads invoices and extracts line items", status: "Active" },
-  { id: "inventory-sync", name: "Inventory sync agent", detail: "Keeps stock levels aligned across systems", status: "Active" },
-  { id: "purchase-order", name: "Purchase order agent", detail: "Drafts reorder requests from inventory gaps", status: "Draft" },
+  { id: "invoice-intake", name: "Invoice intake", detail: "Photo → OCR → normalize → inventory ledger", status: "Active" },
+  { id: "recipe-recost", name: "Recipe re-costing", detail: "Invoice published → ingredient costs → dish costs", status: "Active" },
+  { id: "sensor-watchtower", name: "Sensor watchtower", detail: "Sensor reading → anomaly → work order", status: "Active" },
+  { id: "daily-report", name: "Daily P&L report", detail: "POS + invoices → controllable P&L + summary", status: "Active" },
+  { id: "assistant-rag", name: "AI assistant (RAG)", detail: "Question → retrieve context → DeepSeek answer", status: "Active" },
 ];
 
 function AgentList({ workflows }: { workflows: Workflow[] }) {
@@ -28,7 +33,7 @@ function AgentList({ workflows }: { workflows: Workflow[] }) {
         <table className="w-full text-left text-[11.5px]">
           <thead>
             <tr className="border-b border-slate-100 text-slate-400">
-              <th className="px-5 pt-4 pb-3 font-medium">Agent</th>
+              <th className="px-5 pt-4 pb-3 font-medium">Process</th>
               <th className="px-5 pt-4 pb-3 font-medium">Status</th>
               <th className="w-10 px-5 pt-4 pb-3" />
             </tr>
@@ -75,16 +80,34 @@ function AgentList({ workflows }: { workflows: Workflow[] }) {
 }
 
 export default function AgentsPage() {
-  const workflows = initialWorkflows;
+  const [view, setView] = useState<PageView>("traces");
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Traces</h1>
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center gap-2 px-1">
+        <button
+          type="button"
+          onClick={() => setView("traces")}
+          className={`font-display text-xl font-bold tracking-tight transition-colors sm:text-2xl ${
+            view === "traces" ? "text-slate-900" : "text-slate-300 hover:text-slate-500"
+          }`}
+        >
+          Traces
+        </button>
+        <span className="text-slate-300">&amp;</span>
+        <button
+          type="button"
+          onClick={() => setView("uptime")}
+          className={`font-display text-xl font-bold tracking-tight transition-colors sm:text-2xl ${
+            view === "uptime" ? "text-slate-900" : "text-slate-300 hover:text-slate-500"
+          }`}
+        >
+          Uptime
+        </button>
       </div>
-      <div className="mt-5 min-h-0 flex-1">
-        <AgentList workflows={workflows} />
-      </div>
+
+      {view === "traces" && <AgentList workflows={initialWorkflows} />}
+      {view === "uptime" && <UptimeBoard />}
     </div>
   );
 }

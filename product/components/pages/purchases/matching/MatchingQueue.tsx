@@ -42,7 +42,7 @@ export default function MatchingQueue({ matches, onDecide }: MatchingQueueProps)
 
             <div className="mt-1 text-[11px] text-slate-500">{match.supplier}</div>
 
-            <div className="mt-3 flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
+            <div className="mt-3 flex items-center justify-between gap-2">
               {match.status === "Pending" ? (
                 <div className="flex w-full overflow-hidden rounded-lg border border-slate-200">
                   <button

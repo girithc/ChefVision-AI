@@ -56,15 +56,15 @@ export default function DailyPnl() {
           <table className="w-full text-left text-[11.5px]">
             <thead>
               <tr className="border-b border-slate-100 text-slate-400">
-                <th className="px-5 pt-4 pb-3 font-medium">Day</th>
-                <th className="px-5 pt-4 pb-3 font-medium text-right">Sales</th>
-                <th className="px-5 pt-4 pb-3 font-medium text-right">Covers</th>
-                <th className="px-5 pt-4 pb-3 font-medium text-right">Food cost</th>
-                <th className="px-5 pt-4 pb-3 font-medium text-right">Food %</th>
-                <th className="px-5 pt-4 pb-3 font-medium text-right">Labor cost</th>
-                <th className="px-5 pt-4 pb-3 font-medium text-right">Labor %</th>
-                <th className="px-5 pt-4 pb-3 font-medium text-right">Prime cost</th>
-                <th className="px-5 pt-4 pb-3 font-medium text-right">Controllable profit</th>
+                <th className="px-2.5 pt-4 pb-3 font-medium">Day</th>
+                <th className="px-2.5 pt-4 pb-3 font-medium text-right">Sales</th>
+                <th className="px-2.5 pt-4 pb-3 font-medium text-right">Covers</th>
+                <th className="px-2.5 pt-4 pb-3 font-medium text-right">Food cost</th>
+                <th className="px-2.5 pt-4 pb-3 font-medium text-right">Food %</th>
+                <th className="px-2.5 pt-4 pb-3 font-medium text-right">Labor cost</th>
+                <th className="px-2.5 pt-4 pb-3 font-medium text-right">Labor %</th>
+                <th className="px-2.5 pt-4 pb-3 font-medium text-right">Prime cost</th>
+                <th className="px-2.5 pt-4 pb-3 font-medium text-right">Controllable profit</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
@@ -75,19 +75,19 @@ export default function DailyPnl() {
                 const profit = row.sales - prime;
                 return (
                   <tr key={row.date}>
-                    <td className="px-5 py-3.5 font-semibold text-slate-900">{row.day} · {row.date}</td>
-                    <td className="px-5 py-3.5 text-right font-semibold text-slate-900">{money(row.sales)}</td>
-                    <td className="px-5 py-3.5 text-right text-slate-600">{row.covers}</td>
-                    <td className="px-5 py-3.5 text-right">{money(row.foodCost)}</td>
-                    <td className="px-5 py-3.5 text-right">
+                    <td className="px-2.5 py-3.5 font-semibold text-slate-900">{row.day} · {row.date}</td>
+                    <td className="px-2.5 py-3.5 text-right font-semibold text-slate-900">{money(row.sales)}</td>
+                    <td className="px-2.5 py-3.5 text-right text-slate-600">{row.covers}</td>
+                    <td className="px-2.5 py-3.5 text-right">{money(row.foodCost)}</td>
+                    <td className="px-2.5 py-3.5 text-right">
                       <span className={foodPctDay <= 32 ? "text-emerald-600" : "text-amber-600"}>{foodPctDay.toFixed(1)}%</span>
                     </td>
-                    <td className="px-5 py-3.5 text-right">{money(row.laborCost)}</td>
-                    <td className="px-5 py-3.5 text-right">{laborPctDay.toFixed(1)}%</td>
-                    <td className="px-5 py-3.5 text-right">
+                    <td className="px-2.5 py-3.5 text-right">{money(row.laborCost)}</td>
+                    <td className="px-2.5 py-3.5 text-right">{laborPctDay.toFixed(1)}%</td>
+                    <td className="px-2.5 py-3.5 text-right">
                       <StatusBadge label={`${((prime / row.sales) * 100).toFixed(1)}%`} tone={primeTone((prime / row.sales) * 100)} />
                     </td>
-                    <td className={`px-5 py-3.5 text-right font-semibold ${profit > 0 ? "text-slate-900" : "text-rose-600"}`}>
+                    <td className={`px-2.5 py-3.5 text-right font-semibold ${profit > 0 ? "text-slate-900" : "text-rose-600"}`}>
                       {money(profit)}
                     </td>
                   </tr>
