@@ -16,8 +16,13 @@ const tabs: Array<{ id: Tab; label: string }> = [
   { id: "labels", label: "Labels" },
 ];
 
-export default function RecipesPage() {
-  const [tab, setTab] = useState<Tab>("recipes");
+export default function RecipesPage({ tab: tabProp, onTabChange }: { tab?: string; onTabChange?: (tab: string) => void }) {
+  const [internalTab, setInternalTab] = useState<Tab>("recipes");
+  const tab = (tabProp as Tab | undefined) ?? internalTab;
+  const setTab = (next: Tab) => {
+    setInternalTab(next);
+    onTabChange?.(next);
+  };
   const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
 
   const selectedRecipe = recipes.find((recipe) => recipe.id === selectedRecipeId) ?? null;

@@ -19,8 +19,13 @@ const filters: Array<{ id: "all" | Frequency; label: string }> = [
   { id: "monthly", label: "Monthly" },
 ];
 
-export default function ChecklistsPage() {
-  const [filter, setFilter] = useState<"all" | Frequency>("all");
+export default function ChecklistsPage({ tab: tabProp, onTabChange }: { tab?: string; onTabChange?: (tab: string) => void }) {
+  const [internalFilter, setInternalFilter] = useState<"all" | Frequency>("all");
+  const filter = (tabProp as "all" | Frequency | undefined) ?? internalFilter;
+  const setFilter = (next: "all" | Frequency) => {
+    setInternalFilter(next);
+    onTabChange?.(next);
+  };
   const [running, setRunning] = useState<Checklist | null>(null);
 
   const visible = useMemo(

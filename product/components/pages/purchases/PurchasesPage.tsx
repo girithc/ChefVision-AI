@@ -24,8 +24,13 @@ const tabs: Array<{ id: Tab; label: string }> = [
   { id: "accounting", label: "Accounting" },
 ];
 
-export default function PurchasesPage() {
-  const [tab, setTab] = useState<Tab>("invoices");
+export default function PurchasesPage({ tab: tabProp, onTabChange }: { tab?: string; onTabChange?: (tab: string) => void }) {
+  const [internalTab, setInternalTab] = useState<Tab>("invoices");
+  const tab = (tabProp as Tab | undefined) ?? internalTab;
+  const setTab = (next: Tab) => {
+    setInternalTab(next);
+    onTabChange?.(next);
+  };
   const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(initialInvoices[0]?.id ?? null);
   const [matches, setMatches] = useState<MatchCandidate[]>(initialMatchQueue);

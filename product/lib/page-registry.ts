@@ -9,13 +9,18 @@ export type PageParentId =
   | "overview"
   | "checklists"
   | "equipment"
+  | "multilocation"
   | "purchases"
   | "inventory"
   | "recipes"
   | "finance"
+  | "purchasing"
+  | "menu"
+  | "accounting"
   | "builder"
   | "data"
-  | "users";
+  | "users"
+  | "feedback";
 
 export type PageEntry = {
   /** Unique page id (stable — safe for deep links later). */
@@ -29,6 +34,8 @@ export type PageEntry = {
   /** One-line description of what the page is for. */
   description: string;
   kind: "page" | "view" | "detail" | "modal";
+  /** For tab views: the tab-state value this entry corresponds to inside its page. */
+  tabId?: string;
   /** Extra terms for search/discovery. */
   keywords?: string[];
 };
@@ -74,6 +81,36 @@ export const pageRegistry: PageEntry[] = [
     keywords: ["sop", "daily", "weekly", "monthly", "haccp", "opening", "closing"],
   },
   {
+    id: "checklists.daily",
+    parent: "checklists",
+    parentLabel: "Checklist & SOPs",
+    name: "Daily checklists",
+    description: "Daily checklists and SOPs — opening, closing, HACCP, and temperature logs.",
+    kind: "view",
+    tabId: "daily",
+    keywords: ["daily", "opening", "closing", "haccp"],
+  },
+  {
+    id: "checklists.weekly",
+    parent: "checklists",
+    parentLabel: "Checklist & SOPs",
+    name: "Weekly checklists",
+    description: "Weekly checklists — deep cleans, sanitation schedules, and equipment walks.",
+    kind: "view",
+    tabId: "weekly",
+    keywords: ["weekly", "deep clean", "sanitation"],
+  },
+  {
+    id: "checklists.monthly",
+    parent: "checklists",
+    parentLabel: "Checklist & SOPs",
+    name: "Monthly checklists",
+    description: "Monthly checklists — pest control, fire safety, and periodic maintenance.",
+    kind: "view",
+    tabId: "monthly",
+    keywords: ["monthly", "pest", "fire safety"],
+  },
+  {
     id: "checklists.run",
     parent: "checklists",
     parentLabel: "Checklist & SOPs",
@@ -95,6 +132,7 @@ export const pageRegistry: PageEntry[] = [
   },
   {
     id: "equipment.work-orders",
+    tabId: "workorders",
     parent: "equipment",
     parentLabel: "Equipment & Maintenance",
     name: "Work orders",
@@ -104,6 +142,7 @@ export const pageRegistry: PageEntry[] = [
   },
   {
     id: "equipment.schedules",
+    tabId: "schedules",
     parent: "equipment",
     parentLabel: "Equipment & Maintenance",
     name: "Maintenance schedule",
@@ -113,6 +152,7 @@ export const pageRegistry: PageEntry[] = [
   },
   {
     id: "equipment.sensors",
+    tabId: "sensors",
     parent: "equipment",
     parentLabel: "Equipment & Maintenance",
     name: "Sensor matrix",
@@ -169,6 +209,7 @@ export const pageRegistry: PageEntry[] = [
   },
   {
     id: "purchases.matching",
+    tabId: "matching",
     parent: "purchases",
     parentLabel: "Invoices & Purchases",
     name: "Ingredient matching",
@@ -178,6 +219,7 @@ export const pageRegistry: PageEntry[] = [
   },
   {
     id: "purchases.prices",
+    tabId: "prices",
     parent: "purchases",
     parentLabel: "Invoices & Purchases",
     name: "Price intelligence",
@@ -187,6 +229,7 @@ export const pageRegistry: PageEntry[] = [
   },
   {
     id: "purchases.accounting",
+    tabId: "accounting",
     parent: "purchases",
     parentLabel: "Invoices & Purchases",
     name: "Accounting transfer",
@@ -207,6 +250,7 @@ export const pageRegistry: PageEntry[] = [
   },
   {
     id: "inventory.counts",
+    tabId: "counts",
     parent: "inventory",
     parentLabel: "Inventory",
     name: "Count sheets",
@@ -216,6 +260,7 @@ export const pageRegistry: PageEntry[] = [
   },
   {
     id: "inventory.value",
+    tabId: "value",
     parent: "inventory",
     parentLabel: "Inventory",
     name: "Value & flow",
@@ -236,6 +281,7 @@ export const pageRegistry: PageEntry[] = [
   },
   {
     id: "recipes.ingredients",
+    tabId: "ingredients",
     parent: "recipes",
     parentLabel: "Recipes & Costs",
     name: "Ingredient master",
@@ -245,6 +291,7 @@ export const pageRegistry: PageEntry[] = [
   },
   {
     id: "recipes.labels",
+    tabId: "labels",
     parent: "recipes",
     parentLabel: "Recipes & Costs",
     name: "Label studio",
@@ -292,6 +339,7 @@ export const pageRegistry: PageEntry[] = [
   },
   {
     id: "finance.food-cost",
+    tabId: "cost",
     parent: "finance",
     parentLabel: "Financial Reports",
     name: "Food cost analysis",
@@ -301,6 +349,7 @@ export const pageRegistry: PageEntry[] = [
   },
   {
     id: "finance.spending",
+    tabId: "spending",
     parent: "finance",
     parentLabel: "Financial Reports",
     name: "Spending & budgets",
@@ -310,12 +359,148 @@ export const pageRegistry: PageEntry[] = [
   },
   {
     id: "finance.trends",
+    tabId: "trends",
     parent: "finance",
     parentLabel: "Financial Reports",
     name: "Sales trends",
     description: "Week-over-week and year-over-year sales, covers, and average-check comparisons.",
     kind: "view",
     keywords: ["week over week", "year over year", "comparisons"],
+  },
+
+  // ── Multi-location & AI ────────────────────────────────────────────────────
+  {
+    id: "multilocation.health",
+    tabId: "health",
+    parent: "multilocation",
+    parentLabel: "Multi-location & AI",
+    name: "Health & rankings",
+    description: "Operational health score per location, outlet rankings, and regional/company-wide rollups.",
+    kind: "page",
+    keywords: ["health score", "ranking", "comparison", "regional", "company"],
+  },
+  {
+    id: "multilocation.issues",
+    tabId: "issues",
+    parent: "multilocation",
+    parentLabel: "Multi-location & AI",
+    name: "Issues board",
+    description: "Recurring problems across locations, named owners, due dates, reminders, escalation, and closure confirmation.",
+    kind: "view",
+    keywords: ["corrective actions", "owners", "escalation", "recurring"],
+  },
+  {
+    id: "multilocation.reports",
+    tabId: "reports",
+    parent: "multilocation",
+    parentLabel: "Multi-location & AI",
+    name: "Weekly leadership report",
+    description: "Auto-compiled weekly management report: sales, food cost, labor, operations.",
+    kind: "view",
+    keywords: ["weekly report", "leadership", "management"],
+  },
+  {
+    id: "multilocation.ai",
+    tabId: "ai",
+    parent: "multilocation",
+    parentLabel: "Multi-location & AI",
+    name: "AI & integrations",
+    description: "AI performance Q&A, photo verification + pattern detection, chat/messaging access, read-only POS connections.",
+    kind: "view",
+    keywords: ["assistant", "slack", "teams", "whatsapp", "photo verification", "pos"],
+  },
+
+  // ── Purchasing & Ordering ────────────────────────────────────────────────
+  {
+    id: "purchasing",
+    parent: "purchasing",
+    parentLabel: "Purchasing & Ordering",
+    name: "Vendor order guides",
+    description: "Centralized shared order guides by vendor, category, or storage location — par levels and on-hand per item.",
+    kind: "page",
+    keywords: ["order guide", "vendors", "par levels", "shared", "outlets"],
+  },
+  {
+    id: "purchasing.suggestions",
+    tabId: "suggestions",
+    parent: "purchasing",
+    parentLabel: "Purchasing & Ordering",
+    name: "Suggested orders",
+    description: "Auto-suggested order quantities from par gaps, editable, placed through vendor integrations.",
+    kind: "view",
+    keywords: ["suggested ordering", "reorder", "place order", "integration"],
+  },
+  {
+    id: "purchasing.history",
+    tabId: "history",
+    parent: "purchasing",
+    parentLabel: "Purchasing & Ordering",
+    name: "Purchase history",
+    description: "Vendor and product purchase history, tracked against supplier invoices.",
+    kind: "view",
+    keywords: ["purchase history", "invoices", "reconciliation"],
+  },
+
+  // ── Menu Engineering ──────────────────────────────────────────────────────
+  {
+    id: "menu",
+    parent: "menu",
+    parentLabel: "Menu Engineering",
+    name: "Menu engineering matrix",
+    description: "Stars, Plow Horses, Puzzles, and Dogs — popularity vs contribution margin per dish.",
+    kind: "page",
+    keywords: ["sales mix", "stars", "plow horses", "puzzles", "dogs", "contribution"],
+  },
+  {
+    id: "menu.impact",
+    parent: "menu",
+    parentLabel: "Menu Engineering",
+    name: "Ingredient price impact",
+    description: "What-if simulator: move an ingredient price and see every dish's margin and food-cost % react.",
+    kind: "view",
+    keywords: ["simulator", "price change", "margins", "pricing decisions"],
+  },
+
+  // ── Accounting & Labor ──────────────────────────────────────────────────────
+  {
+    id: "accounting.integrations",
+    tabId: "integrations",
+    parent: "accounting",
+    parentLabel: "Accounting & Labor",
+    name: "Connected systems",
+    description: "POS, payroll, and accounting integrations with connect/disconnect and last-sync status.",
+    kind: "view",
+    keywords: ["pos", "toast", "square", "gusto", "adp", "quickbooks", "xero"],
+  },
+  {
+    id: "accounting.sales",
+    tabId: "sales",
+    parent: "accounting",
+    parentLabel: "Accounting & Labor",
+    name: "Daily sales & PMIX",
+    description: "Daily sales entries imported from POS plus product-mix analysis of top sellers.",
+    kind: "view",
+    keywords: ["sales import", "pmix", "product mix", "covers"],
+  },
+  {
+    id: "accounting.bills",
+    tabId: "bills",
+    parent: "accounting",
+    parentLabel: "Accounting & Labor",
+    name: "Bill pay",
+    description: "Bill payment workflows: schedule, partial (50%), and full payments against supplier bills.",
+    kind: "view",
+    keywords: ["bills", "payments", "schedule", "partial", "accounts payable"],
+  },
+  {
+    id: "accounting.consolidated",
+    tabId: "consolidated",
+    parent: "accounting",
+    parentLabel: "Accounting & Labor",
+    name: "Consolidated reporting",
+    description: "Multi-restaurant rollup: sales, food %, labor %, profit, and the AI assistant for cost questions.",
+    kind: "view",
+    keywords: ["multi location", "rollup", "assistant"],
   },
 
   // ── Traces & Uptime ──────────────────────────────────────────────────────
@@ -327,6 +512,16 @@ export const pageRegistry: PageEntry[] = [
     description: "Every platform workflow with live run status: invoice intake, re-costing, sensors, reports, assistant.",
     kind: "page",
     keywords: ["agents", "workflows", "runs"],
+  },
+  {
+    id: "builder.uptime",
+    parent: "builder",
+    parentLabel: "Traces & Uptime",
+    name: "Pipeline uptime",
+    description: "Success rate, volume, and latency for each platform pipeline, with past runs and tests.",
+    kind: "view",
+    tabId: "uptime",
+    keywords: ["uptime", "health", "pipelines", "runs"],
   },
   {
     id: "traces.detail",
@@ -361,6 +556,7 @@ export const pageRegistry: PageEntry[] = [
   },
   {
     id: "users.roles",
+    tabId: "roles",
     parent: "users",
     parentLabel: "Users & Permissions",
     name: "Roles & permissions",
@@ -369,6 +565,16 @@ export const pageRegistry: PageEntry[] = [
     keywords: ["rbac", "permissions", "access", "roles"],
   },
 
+  // ── Feedback ──────────────────────────────────────────────────────────────
+  {
+    id: "feedback",
+    parent: "feedback",
+    parentLabel: "Feedback",
+    name: "Feedback inbox",
+    description: "All feedback submitted from the ✦ button — tagged by page, stored on this device.",
+    kind: "page",
+    keywords: ["feedback", "suggestions", "ideas", "reports"],
+  },
   // ── Global overlays ──────────────────────────────────────────────────────
   {
     id: "global.assistant",
@@ -407,4 +613,13 @@ export function searchPages(query: string): PageEntry[] {
       entry.description.toLowerCase().includes(q) ||
       entry.keywords?.some((keyword) => keyword.toLowerCase().includes(q))
   );
+}
+
+/** Resolve the exact registry entry for a page + active tab value. */
+export function resolvePageByTab(parent: PageParentId, tabId?: string): PageEntry | undefined {
+  if (tabId) {
+    const match = pageRegistry.find((entry) => entry.parent === parent && entry.tabId === tabId);
+    if (match) return match;
+  }
+  return pageRegistry.find((entry) => entry.parent === parent && entry.kind === "page");
 }

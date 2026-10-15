@@ -59,8 +59,13 @@ const tabs: Array<{ id: Tab; label: string }> = [
   { id: "sensors", label: "Sensors" },
 ];
 
-export default function EquipmentPage() {
-  const [tab, setTab] = useState<Tab>("equipment");
+export default function EquipmentPage({ tab: tabProp, onTabChange }: { tab?: string; onTabChange?: (tab: string) => void }) {
+  const [internalTab, setInternalTab] = useState<Tab>("equipment");
+  const tab = (tabProp as Tab | undefined) ?? internalTab;
+  const setTab = (next: Tab) => {
+    setInternalTab(next);
+    onTabChange?.(next);
+  };
   const [assets, setAssets] = useState<Asset[]>(seedAssets);
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>(initialWorkOrders);
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);

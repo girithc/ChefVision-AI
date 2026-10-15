@@ -186,6 +186,50 @@ export const recipes: Recipe[] = [
     ],
     subRecipes: [{ recipeId: "r2", quantity: 3, unit: "oz" }],
   },
+  {
+    id: "r6",
+    name: "Grilled Chicken Salad",
+    type: "finished",
+    category: "Main",
+    station: "Cold line",
+    portions: 1,
+    portionSize: "1 salad",
+    menuPrice: 13.5,
+    photoGradient: "from-lime-100 to-emerald-100",
+    hasVideo: false,
+    steps: [
+      "Grill chicken; slice against the grain.",
+      "Toss romaine, pico, and tortilla strips with lime vinaigrette.",
+      "Top with sliced chicken; serve chilled.",
+    ],
+    lines: [
+      { ingredientId: "i1", quantity: 0.3, unit: "lb", prepNote: "4.8 oz portion" },
+      { ingredientId: "i4", quantity: 0.35, unit: "lb", prepNote: "chopped" },
+      { ingredientId: "i7", quantity: 0.015, unit: "L", prepNote: "vinaigrette" },
+    ],
+    subRecipes: [{ recipeId: "r2", quantity: 2, unit: "oz" }],
+  },
+  {
+    id: "r7",
+    name: "Cheddar Quesadilla",
+    type: "finished",
+    category: "Starter",
+    station: "Hot line",
+    portions: 1,
+    portionSize: "1 quesadilla",
+    menuPrice: 9.0,
+    photoGradient: "from-amber-100 to-yellow-100",
+    hasVideo: false,
+    steps: [
+      "Fill tortilla with cheddar; griddle until crisp.",
+      "Cut into wedges; serve with pico.",
+    ],
+    lines: [
+      { ingredientId: "i11", quantity: 2, unit: "ea" },
+      { ingredientId: "i3", quantity: 0.25, unit: "lb", prepNote: "shredded" },
+    ],
+    subRecipes: [{ recipeId: "r2", quantity: 2, unit: "oz" }],
+  },
 ];
 
 const ingredientMap = new Map(ingredients.map((ingredient) => [ingredient.id, ingredient]));

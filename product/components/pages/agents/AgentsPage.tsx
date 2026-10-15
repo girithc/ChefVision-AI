@@ -79,8 +79,13 @@ function AgentList({ workflows }: { workflows: Workflow[] }) {
   );
 }
 
-export default function AgentsPage() {
-  const [view, setView] = useState<PageView>("traces");
+export default function AgentsPage({ tab: tabProp, onTabChange }: { tab?: string; onTabChange?: (tab: string) => void }) {
+  const [internalView, setInternalView] = useState<PageView>("traces");
+  const view = (tabProp as PageView | undefined) ?? internalView;
+  const setView = (next: PageView) => {
+    setInternalView(next);
+    onTabChange?.(next);
+  };
 
   return (
     <div className="space-y-5">

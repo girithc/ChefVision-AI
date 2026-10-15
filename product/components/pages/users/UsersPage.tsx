@@ -13,8 +13,13 @@ const tabs: Array<{ id: Tab; label: string }> = [
   { id: "roles", label: "Roles & permissions" },
 ];
 
-export default function UsersPage() {
-  const [tab, setTab] = useState<Tab>("users");
+export default function UsersPage({ tab: tabProp, onTabChange }: { tab?: string; onTabChange?: (tab: string) => void }) {
+  const [internalTab, setInternalTab] = useState<Tab>("users");
+  const tab = (tabProp as Tab | undefined) ?? internalTab;
+  const setTab = (next: Tab) => {
+    setInternalTab(next);
+    onTabChange?.(next);
+  };
   const [users, setUsers] = useState<UserRow[]>(initialUsers);
   const [roles, setRoles] = useState<Role[]>(initialRoles);
   const [selectedRoleId, setSelectedRoleId] = useState<string>(initialRoles[0]?.id ?? "");

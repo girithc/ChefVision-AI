@@ -16,8 +16,13 @@ const tabs: Array<{ id: Tab; label: string }> = [
   { id: "trends", label: "Sales trends" },
 ];
 
-export default function FinancePage() {
-  const [tab, setTab] = useState<Tab>("daily");
+export default function FinancePage({ tab: tabProp, onTabChange }: { tab?: string; onTabChange?: (tab: string) => void }) {
+  const [internalTab, setInternalTab] = useState<Tab>("daily");
+  const tab = (tabProp as Tab | undefined) ?? internalTab;
+  const setTab = (next: Tab) => {
+    setInternalTab(next);
+    onTabChange?.(next);
+  };
 
   return (
     <div className="space-y-5">

@@ -8,57 +8,81 @@ import {
   Database,
   FileChartColumn,
   House,
+  Landmark,
   ListChecks,
+  MessageSquare,
   PanelLeftClose,
   ReceiptText,
   Search,
   ArrowUp,
   Settings,
+  Building2,
+  ShoppingCart,
   Sparkles,
+  UtensilsCrossed,
   Users,
   Workflow,
   Wrench,
   X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { searchPages, type PageEntry } from "../lib/page-registry";
+import { resolvePageByTab, searchPages, type PageEntry } from "../lib/page-registry";
+import FeedbackWidget from "./shared/FeedbackWidget";
 import OverviewPage from "./pages/overview/OverviewPage";
 import ChecklistsPage from "./pages/checklists/ChecklistsPage";
 import AgentsPage from "./pages/agents/AgentsPage";
 import EquipmentPage from "./pages/equipment/EquipmentPage";
 import PurchasesPage from "./pages/purchases/PurchasesPage";
+import MultiLocationPage from "./pages/multilocation/MultiLocationPage";
 import InventoryPage from "./pages/inventory/InventoryPage";
 import RecipesPage from "./pages/recipes/RecipesPage";
 import FinancePage from "./pages/finance/FinancePage";
+import PurchasingPage from "./pages/purchasing/PurchasingPage";
+import MenuEngineeringPage from "./pages/menu/MenuEngineeringPage";
+import AccountingPage from "./pages/accounting/AccountingPage";
 import DataPage from "./pages/data/DataPage";
 import UsersPage from "./pages/users/UsersPage";
+import FeedbackPage from "./pages/feedback/FeedbackPage";
 
 type NavId =
   | "overview"
   | "checklists"
   | "builder"
   | "equipment"
+  | "multilocation"
   | "purchases"
   | "inventory"
   | "recipes"
   | "finance"
+  | "purchasing"
+  | "menu"
+  | "accounting"
   | "data"
-  | "users";
+  | "users"
+  | "feedback";
 
 const navItems: Array<{ id: NavId; label: string; icon: LucideIcon }> = [
   { id: "overview", label: "Home", icon: House },
   { id: "checklists", label: "Checklist & SOPs", icon: ListChecks },
   { id: "equipment", label: "Equipment & Maintenance", icon: Wrench },
+  { id: "multilocation", label: "Multi-location & AI", icon: Building2 },
   { id: "purchases", label: "Invoices & Purchases", icon: ReceiptText },
   { id: "inventory", label: "Inventory", icon: Boxes },
   { id: "recipes", label: "Recipes & Costs", icon: ChefHat },
   { id: "finance", label: "Financial Reports", icon: FileChartColumn },
+  { id: "purchasing", label: "Purchasing & Ordering", icon: ShoppingCart },
+  { id: "menu", label: "Menu Engineering", icon: UtensilsCrossed },
+  { id: "accounting", label: "Accounting & Labor", icon: Landmark },
   { id: "builder", label: "Traces & Uptime", icon: Workflow },
   { id: "data", label: "Data", icon: Database },
   { id: "users", label: "Users & Permissions", icon: Users },
+  { id: "feedback", label: "Feedback", icon: MessageSquare },
 ];
 
 type AssistantMessage = { role: "user" | "assistant"; content: string };
+
+/** Feature flag — flip to true to bring back the AI assistant overlay. */
+const AI_ASSISTANT_ENABLED = false;
 
 const assistantGreeting: AssistantMessage = {
   role: "assistant",
@@ -90,12 +114,30 @@ export default function AppWorkspace() {
   const [activeNav, setActiveNav] = useState<NavId>("overview");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [assistantOpen, setAssistantOpen] = useState(false);
+
   const [messages, setMessages] = useState<AssistantMessage[]>([assistantGreeting]);
   const [assistantInput, setAssistantInput] = useState("");
   const [pageQuery, setPageQuery] = useState("");
+  const [viewByParent, setViewByParent] = useState<Partial<Record<NavId, string>>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const pageResults: PageEntry[] = searchPages(pageQuery).slice(0, 8);
+  const currentViewEntry = resolvePageByTab(activeNav, viewByParent[activeNav]) ?? null;
+
+  function setView(parent: NavId, tabId?: string) {
+    setViewByParent((current) => {
+      const next = { ...current };
+      if (tabId) next[parent] = tabId;
+      else delete next[parent];
+      return next;
+    });
+  }
+
+  function navigateToPage(entry: PageEntry) {
+    setActiveNav(entry.parent);
+    setView(entry.parent, entry.tabId);
+    setPageQuery("");
+  }
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -208,10 +250,7 @@ export default function AppWorkspace() {
                     <button
                       key={entry.id}
                       type="button"
-                      onClick={() => {
-                        setActiveNav(entry.parent);
-                        setPageQuery("");
-                      }}
+                      onClick={() => navigateToPage(entry)}
                       className="flex w-full items-start justify-between gap-3 px-4 py-2.5 text-left transition-colors hover:bg-slate-50"
                     >
                       <div className="min-w-0">
@@ -229,12 +268,9 @@ export default function AppWorkspace() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button className="relative rounded-lg border border-slate-200 bg-slate-50 p-2 text-slate-500 transition-colors hover:text-slate-900" type="button" aria-label="Notifications">
+            <button className="relative rounded-lg p-2 text-slate-500 transition-colors hover:text-slate-900" type="button" aria-label="Notifications">
               <Bell className="h-4 w-4" />
               <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 animate-ping rounded-full bg-emerald-500" />
-            </button>
-            <button className="rounded-lg border border-slate-200 bg-slate-50 p-2 text-slate-500 transition-colors hover:text-slate-900" type="button" aria-label="Settings">
-              <Settings className="h-4 w-4" />
             </button>
             <div className="hidden items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-1 sm:flex">
               <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-700">M</div>
@@ -263,19 +299,50 @@ export default function AppWorkspace() {
 
         <main className="app-scrollbar min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
           {activeNav === "overview" && <OverviewPage />}
-          {activeNav === "checklists" && <ChecklistsPage />}
-          {activeNav === "builder" && <AgentsPage />}
-          {activeNav === "equipment" && <EquipmentPage />}
-          {activeNav === "purchases" && <PurchasesPage />}
-          {activeNav === "inventory" && <InventoryPage />}
-          {activeNav === "recipes" && <RecipesPage />}
-          {activeNav === "finance" && <FinancePage />}
+          {activeNav === "checklists" && (
+            <ChecklistsPage tab={viewByParent.checklists} onTabChange={(tab) => setView("checklists", tab)} />
+          )}
+          {activeNav === "builder" && (
+            <AgentsPage tab={viewByParent.builder} onTabChange={(tab) => setView("builder", tab)} />
+          )}
+          {activeNav === "equipment" && (
+            <EquipmentPage tab={viewByParent.equipment} onTabChange={(tab) => setView("equipment", tab)} />
+          )}
+          {activeNav === "multilocation" && (
+            <MultiLocationPage tab={viewByParent.multilocation} onTabChange={(tab) => setView("multilocation", tab)} />
+          )}
+          {activeNav === "purchases" && (
+            <PurchasesPage tab={viewByParent.purchases} onTabChange={(tab) => setView("purchases", tab)} />
+          )}
+          {activeNav === "inventory" && (
+            <InventoryPage tab={viewByParent.inventory} onTabChange={(tab) => setView("inventory", tab)} />
+          )}
+          {activeNav === "recipes" && (
+            <RecipesPage tab={viewByParent.recipes} onTabChange={(tab) => setView("recipes", tab)} />
+          )}
+          {activeNav === "finance" && (
+            <FinancePage tab={viewByParent.finance} onTabChange={(tab) => setView("finance", tab)} />
+          )}
+          {activeNav === "purchasing" && (
+            <PurchasingPage tab={viewByParent.purchasing} onTabChange={(tab) => setView("purchasing", tab)} />
+          )}
+          {activeNav === "menu" && <MenuEngineeringPage />}
+          {activeNav === "accounting" && (
+            <AccountingPage tab={viewByParent.accounting} onTabChange={(tab) => setView("accounting", tab)} />
+          )}
           {activeNav === "data" && <DataPage />}
-          {activeNav === "users" && <UsersPage />}
+          {activeNav === "users" && (
+            <UsersPage tab={viewByParent.users} onTabChange={(tab) => setView("users", tab)} />
+          )}
+          {activeNav === "feedback" && <FeedbackPage />}
         </main>
       </div>
 
-      {!assistantOpen && (
+      <FeedbackWidget
+        page={currentViewEntry ? { id: currentViewEntry.id, name: currentViewEntry.name } : null}
+      />
+      {/* AI assistant — hidden for now (bring back by flipping this flag) */}
+      {AI_ASSISTANT_ENABLED && !assistantOpen && (
         <button
           type="button"
           onClick={() => setAssistantOpen(true)}
@@ -287,7 +354,7 @@ export default function AppWorkspace() {
         </button>
       )}
 
-      {assistantOpen && (
+      {AI_ASSISTANT_ENABLED && assistantOpen && (
         <div className="fixed bottom-5 right-5 z-50 flex h-[min(80vh,640px)] w-[min(94vw,460px)] flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-2xl">
           <div className="flex items-center justify-between px-5 pb-2 pt-4">
             <div className="flex items-center gap-2">

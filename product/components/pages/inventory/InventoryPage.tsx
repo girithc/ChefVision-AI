@@ -15,8 +15,13 @@ const tabs: Array<{ id: Tab; label: string }> = [
   { id: "value", label: "Value & flow" },
 ];
 
-export default function InventoryPage() {
-  const [tab, setTab] = useState<Tab>("stock");
+export default function InventoryPage({ tab: tabProp, onTabChange }: { tab?: string; onTabChange?: (tab: string) => void }) {
+  const [internalTab, setInternalTab] = useState<Tab>("stock");
+  const tab = (tabProp as Tab | undefined) ?? internalTab;
+  const setTab = (next: Tab) => {
+    setInternalTab(next);
+    onTabChange?.(next);
+  };
   const [counted, setCounted] = useState<Record<string, number>>({});
 
   return (
